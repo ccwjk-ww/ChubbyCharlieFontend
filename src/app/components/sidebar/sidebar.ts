@@ -255,7 +255,7 @@ export class Sidebar implements OnInit, OnDestroy {
         { icon: 'bi-bar-chart', label: 'Reports', route: '/transactions/reports' }
       ]
     },
-    // { icon: 'bi-tools', label: 'Maintenance', route: '/maintenance' },
+    { icon: 'bi-chat-right-heart', label: 'Chubby Charlie AI', route: '/chat' },
     // { icon: 'bi-truck', label: 'Logistics', route: '/logistics' },
     // { icon: 'bi-calculator', label: 'Office Budget', route: '/office-budget' },
     // { icon: 'bi-bell', label: 'Notifications', route: '/notifications' },

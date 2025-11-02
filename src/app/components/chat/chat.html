@@ -1,0 +1,165 @@
+<!-- Full Page Chat Container -->
+<div class="chat-page">
+
+  <!-- Header Bar -->
+  <div class="chat-header">
+    <div class="header-left">
+      <div class="bot-avatar-large">🤖</div>
+      <div class="header-info">
+        <h1>Chubby AI Assistant</h1>
+        <p class="subtitle">
+          <span class="status-dot"></span>
+          ระบบช่วยเหลืออัจฉริยะ • พร้อมให้บริการ
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="action-btn" (click)="exportChat()" title="Export Chat">
+        <span class="icon">📥</span>
+        <span class="label">Export</span>
+      </button>
+      <button class="action-btn" (click)="clearChat()" title="Clear Chat">
+        <span class="icon">🗑️</span>
+        <span class="label">Clear</span>
+      </button>
+      <button class="action-btn" (click)="refreshChat()" title="Refresh">
+        <span class="icon">🔄</span>
+        <span class="label">Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="chat-content">
+
+    <!-- Sidebar with Quick Questions -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>💬 คำถามด่วน</h3>
+        <p>คลิกเพื่อถามคำถามทั่วไป</p>
+      </div>
+
+      <div class="quick-questions">
+        <button
+          *ngFor="let q of quickQuestions"
+          class="quick-question-btn"
+          [style.border-left-color]="q.color"
+          (click)="sendQuickQuestion(q.text)"
+          [disabled]="isLoading">
+          <span class="q-icon">{{ q.icon }}</span>
+          <span class="q-text">{{ q.text }}</span>
+        </button>
+      </div>
+
+      <!-- Tips Section -->
+      <div class="tips-section">
+        <h4>💡 เคล็ดลับการใช้งาน</h4>
+        <ul>
+          <li>พิมพ์คำถามเป็นภาษาไทยหรือภาษาอังกฤษ</li>
+          <li>ถามคำถามที่เฉพาะเจาะจง</li>
+          <li>กด Enter เพื่อส่งข้อความ</li>
+          <li>Shift + Enter เพื่อขึ้นบรรทัดใหม่</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="messages-container" #messageContainer>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="messages.length === 0">
+        <div class="empty-icon">💬</div>
+        <h2>เริ่มต้นการสนทนา</h2>
+        <p>เลือกคำถามด่วนจากด้านซ้าย หรือพิมพ์คำถามของคุณด้านล่าง</p>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-list">
+        <div
+          *ngFor="let message of messages; let i = index"
+          class="message-wrapper"
+          [class.user-message]="message.isUser"
+          [class.bot-message]="!message.isUser">
+
+          <!-- Bot Message -->
+          <div class="message-row" *ngIf="!message.isUser">
+            <div class="message-avatar">
+              <span class="avatar-icon">🤖</span>
+            </div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="sender-name">Chubby AI</span>
+                <span class="message-time">{{ message.timestamp | date: 'short' }}</span>
+              </div>
+              <div class="message-bubble bot-bubble">
+                <div class="message-text" [innerHTML]="message.text | nl2br"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Message -->
+          <div class="message-row" *ngIf="message.isUser">
+            <div class="message-content user-content">
+              <div class="message-header">
+                <span class="message-time">{{ message.timestamp | date: 'short' }}</span>
+                <span class="sender-name">คุณ</span>
+              </div>
+              <div class="message-bubble user-bubble">
+                <div class="message-text" [innerHTML]="message.text | nl2br"></div>
+              </div>
+            </div>
+            <div class="message-avatar">
+              <span class="avatar-icon">👤</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="message-wrapper bot-message" *ngIf="isLoading">
+          <div class="message-row">
+            <div class="message-avatar">
+              <span class="avatar-icon">🤖</span>
+            </div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="sender-name">Chubby AI</span>
+                <span class="message-time">กำลังพิมพ์...</span>
+              </div>
+              <div class="message-bubble bot-bubble loading">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="chat-input-area">
+    <div class="input-container">
+      <textarea
+        [(ngModel)]="currentMessage"
+        (keypress)="onKeyPress($event)"
+        placeholder="💬 พิมพ์ข้อความของคุณที่นี่... (กด Enter เพื่อส่ง, Shift+Enter เพื่อขึ้นบรรทัดใหม่)"
+        rows="1"
+        [disabled]="isLoading"
+        class="message-input"></textarea>
+
+      <button
+        (click)="sendMessage()"
+        [disabled]="!currentMessage.trim() || isLoading"
+        class="send-button"
+        title="ส่งข้อความ">
+        <span class="send-icon">📤</span>
+        <span class="send-label">ส่ง</span>
+      </button>
+    </div>
+  </div>
+
+</div>

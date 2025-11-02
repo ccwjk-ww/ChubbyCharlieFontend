@@ -435,6 +435,14 @@ export const routes: Routes = [
     data: { roles: ['ADMIN', 'MANAGER'] }
   },
 
+  // ... routes อื่นๆ
+  {
+    path: 'chat',
+    loadComponent: () => import('./components/chat/chat')
+      .then(m => m.ChatComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['ADMIN', 'MANAGER'] }
+  },
   // ============================================
   // DEFAULT & WILDCARD ROUTES
   // ============================================
