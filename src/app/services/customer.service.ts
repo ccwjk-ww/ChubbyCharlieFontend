@@ -18,7 +18,7 @@ export interface Customer {
   providedIn: 'root'
 })
 export class CustomerService {
-  private apiUrl = 'http://localhost:8080/api/customers';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/customers';
 
   constructor(private http: HttpClient) {}
 

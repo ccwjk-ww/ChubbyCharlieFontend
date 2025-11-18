@@ -31,7 +31,7 @@ export interface ChinaStock {
   providedIn: 'root'
 })
 export class ChinaStockService {
-  private apiUrl = 'http://localhost:8080/api/china-stocks';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/china-stocks';
 
   constructor(private http: HttpClient) {}
 

@@ -1,9 +1,15 @@
+/* ====================================
+   Login Page - Chubby Charlie Theme
+   Color Palette: ATNN Design Studio
+   ==================================== */
+
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* เปลี่ยนจาก purple เป็น Papaya & Saguaro gradient */
+  background: linear-gradient(135deg, #FF855A 0%, #D1D175 100%);
   position: relative;
   overflow: hidden;
   padding: 2rem;
@@ -21,13 +27,14 @@
 .shape {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.1;
+  opacity: 0.15;
 }
 
 .shape-1 {
   width: 500px;
   height: 500px;
-  background: white;
+  /* เปลี่ยนเป็น Banana Cream */
+  background: #FFF4C5;
   top: -200px;
   right: -100px;
 }
@@ -35,7 +42,8 @@
 .shape-2 {
   width: 300px;
   height: 300px;
-  background: white;
+  /* เปลี่ยนเป็น Sky */
+  background: #A5B7E5;
   bottom: -100px;
   left: -50px;
 }
@@ -43,22 +51,26 @@
 .shape-3 {
   width: 200px;
   height: 200px;
-  background: white;
+  /* เปลี่ยนเป็น Linen */
+  background: #F7F6EB;
   top: 50%;
   left: 10%;
 }
 
 /* Login Card */
 .login-card {
-  background: white;
+  /* เปลี่ยนเป็น Linen background */
+  background: #F7F6EB;
   border-radius: 24px;
   padding: 3rem;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(56, 32, 32, 0.3);
   position: relative;
   z-index: 1;
   animation: fadeInUp 0.6s ease-out;
+  /* เพิ่ม border สี Papaya */
+  border: 3px solid #FF855A;
 }
 
 @keyframes fadeInUp {
@@ -79,29 +91,40 @@
 }
 
 .logo {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
+  /* เปลี่ยนเป็น Banana Cream background */
+  background: #FFF4C5;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  color: white;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  /* เพิ่ม border สี Papaya */
+  border: 4px solid #FF855A;
+  box-shadow: 0 10px 30px rgba(255, 133, 90, 0.4);
+  overflow: hidden;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .login-header h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a1a;
+  /* เปลี่ยนเป็น Oxblood */
+  color: #382020;
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
   font-size: 1rem;
-  color: #6b7280;
+  /* เปลี่ยนเป็น Oxblood opacity 70% */
+  color: rgba(56, 32, 32, 0.7);
   margin: 0;
   font-weight: 500;
 }
@@ -130,13 +153,15 @@
 }
 
 .alert-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  /* เปลี่ยนเป็นโทนสี Papaya สำหรับ error */
+  background: rgba(255, 133, 90, 0.1);
+  border: 2px solid #FF855A;
+  color: #382020;
 }
 
 .alert i {
   font-size: 1.25rem;
+  color: #FF855A;
 }
 
 .alert span {
@@ -148,7 +173,7 @@
 .alert-close {
   background: none;
   border: none;
-  color: inherit;
+  color: #FF855A;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0;
@@ -162,7 +187,7 @@
 }
 
 .alert-close:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 133, 90, 0.2);
 }
 
 /* Form */
@@ -181,7 +206,8 @@
 .form-group label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  /* เปลี่ยนเป็น Oxblood */
+  color: #382020;
 }
 
 .input-group {
@@ -193,7 +219,8 @@
 .input-icon {
   position: absolute;
   left: 1rem;
-  color: #9ca3af;
+  /* เปลี่ยนเป็น Saguaro */
+  color: #D1D175;
   font-size: 1.25rem;
   pointer-events: none;
 }
@@ -201,21 +228,29 @@
 .form-input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
-  border: 2px solid #e5e7eb;
+  /* เปลี่ยน border เป็น Sky */
+  border: 2px solid #A5B7E5;
   border-radius: 12px;
   font-size: 1rem;
   transition: all 0.2s ease;
+  /* เปลี่ยน background เป็น white */
   background: white;
+  color: #382020;
+}
+
+.form-input::placeholder {
+  color: rgba(56, 32, 32, 0.5);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  /* เปลี่ยน focus color เป็น Papaya */
+  border-color: #FF855A;
+  box-shadow: 0 0 0 4px rgba(255, 133, 90, 0.2);
 }
 
 .form-input:disabled {
-  background: #f9fafb;
+  background: rgba(247, 246, 235, 0.5);
   cursor: not-allowed;
 }
 
@@ -224,7 +259,8 @@
   right: 1rem;
   background: none;
   border: none;
-  color: #9ca3af;
+  /* เปลี่ยนเป็น Saguaro */
+  color: #D1D175;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -236,8 +272,9 @@
 }
 
 .password-toggle:hover:not(:disabled) {
-  color: #667eea;
-  background: #f3f4f6;
+  /* เปลี่ยนเป็น Papaya */
+  color: #FF855A;
+  background: rgba(255, 133, 90, 0.1);
 }
 
 .password-toggle:disabled {
@@ -249,7 +286,8 @@
 .login-btn {
   width: 100%;
   padding: 1.125rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* เปลี่ยน gradient เป็น Papaya & Saguaro */
+  background: linear-gradient(135deg, #FF855A 0%, #D1D175 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -261,13 +299,17 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 133, 90, 0.4);
   margin-top: 0.5rem;
+  /* เพิ่ม text shadow */
+  text-shadow: 1px 1px 2px rgba(56, 32, 32, 0.3);
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 8px 20px rgba(255, 133, 90, 0.6);
+  /* เข้มขึ้นเล็กน้อย */
+  filter: brightness(1.1);
 }
 
 .login-btn:active:not(:disabled) {
@@ -275,7 +317,8 @@
 }
 
 .login-btn:disabled {
-  background: #9ca3af;
+  /* เปลี่ยนเป็น Sky สำหรับ disabled */
+  background: #A5B7E5;
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
@@ -312,13 +355,15 @@
   justify-content: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #6b7280;
+  /* เปลี่ยนเป็น Oxblood */
+  color: rgba(56, 32, 32, 0.7);
   margin: 0;
 }
 
 .info-text i {
   font-size: 1rem;
-  color: #3b82f6;
+  /* เปลี่ยนเป็น Sky */
+  color: #A5B7E5;
 }
 
 /* Responsive */
@@ -336,9 +381,8 @@
   }
 
   .logo {
-    width: 70px;
-    height: 70px;
-    font-size: 2rem;
+    width: 80px;
+    height: 80px;
   }
 
   .form-input {
@@ -349,4 +393,37 @@
     font-size: 1rem;
     padding: 1rem;
   }
+}
+
+/* ====================================
+   Additional Enhancements
+   ==================================== */
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Custom scrollbar (if needed) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F6EB;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D175;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF855A;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid #FF855A;
+  outline-offset: 2px;
 }

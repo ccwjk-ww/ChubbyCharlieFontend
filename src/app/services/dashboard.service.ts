@@ -51,7 +51,7 @@ interface TopProduct {
   providedIn: 'root'
 })
 export class DashboardService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api';
 
   constructor(private http: HttpClient) {}
 

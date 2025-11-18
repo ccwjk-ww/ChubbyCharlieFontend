@@ -58,8 +58,8 @@ export interface StockOrderRecommendationDTO {
   providedIn: 'root'
 })
 export class StockForecastService {
-  private apiUrl = 'http://localhost:8080/api/stock-forecast';
-  private adminApiUrl = 'http://localhost:8080/api/stock-forecast/admin';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/stock-forecast';
+  private adminApiUrl = 'https://www.chubbycharlieshop.com/api/stock-forecast/admin';
 
   constructor(private http: HttpClient) {}
 

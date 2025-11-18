@@ -314,8 +314,8 @@ export interface StockOption {
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = 'http://localhost:8080/api/products';
-  private stockApiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/products';
+  private stockApiUrl = 'https://www.chubbycharlieshop.com/api';
 
   constructor(private http: HttpClient) {}
 

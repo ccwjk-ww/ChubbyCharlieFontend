@@ -29,7 +29,7 @@ export interface SystemSummary {
   providedIn: 'root'
 })
 export class StockSummaryService {
-  private apiUrl = 'http://localhost:8080/api/summary';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/summary';
 
   constructor(private http: HttpClient) {}
 

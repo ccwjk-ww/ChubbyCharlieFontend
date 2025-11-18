@@ -97,7 +97,7 @@ export interface CompleteStockLotResponse {
   providedIn: 'root'
 })
 export class StockLotService {
-  private apiUrl = 'http://localhost:8080/api/stock-lots';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/stock-lots';
 
   constructor(private http: HttpClient) {}
 

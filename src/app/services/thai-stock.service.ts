@@ -25,7 +25,7 @@ export interface ThaiStock {
   providedIn: 'root'
 })
 export class ThaiStockService {
-  private apiUrl = 'http://localhost:8080/api/thai-stocks';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/thai-stocks';
 
   constructor(private http: HttpClient) {}
 

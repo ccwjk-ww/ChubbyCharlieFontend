@@ -22,7 +22,7 @@ export interface Employee {
   providedIn: 'root'
 })
 export class EmployeeService {
-  private apiUrl = 'http://localhost:8080/api/employees';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/employees';
 
   constructor(private http: HttpClient) {}
 
