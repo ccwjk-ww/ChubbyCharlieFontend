@@ -8,6 +8,7 @@
     <form class="china-stock-form" [formGroup]="chinaStockForm" (ngSubmit)="onSubmit()">
       <div class="form-row">
         <div class="form-fields">
+          <!-- Row 1: Name & Stock Lot -->
           <div class="field-row">
             <div class="form-group">
               <label for="name">Product Name <span class="required">*</span></label>
@@ -33,6 +34,7 @@
             </div>
           </div>
 
+          <!-- Row 2: Unit Price & Quantity -->
           <div class="field-row">
             <div class="form-group">
               <label for="unitPriceYuan">Unit Price (¥) <span class="required">*</span></label>
@@ -43,7 +45,7 @@
                 class="form-control"
                 type="number"
                 min="0"
-                step="0.01"
+                step="0.001"
                 [class.error]="chinaStockForm.get('unitPriceYuan')?.invalid && chinaStockForm.get('unitPriceYuan')?.touched">
               <div class="error-message" *ngIf="chinaStockForm.get('unitPriceYuan')?.invalid && chinaStockForm.get('unitPriceYuan')?.touched">
                 Unit price is required and must be greater than 0
@@ -66,6 +68,7 @@
             </div>
           </div>
 
+          <!-- Row 3: Shipping Within China & Exchange Rate -->
           <div class="field-row">
             <div class="form-group">
               <label for="shippingWithinChinaYuan">Shipping within China (¥)</label>
@@ -76,7 +79,7 @@
                 class="form-control"
                 type="number"
                 min="0"
-                step="0.01">
+                step="0.001">
             </div>
             <div class="form-group">
               <label for="exchangeRate">Exchange Rate (¥ to ฿) <span class="required">*</span></label>
@@ -87,7 +90,7 @@
                 class="form-control"
                 type="number"
                 min="0.1"
-                step="0.01"
+                step="0.001"
                 [class.error]="chinaStockForm.get('exchangeRate')?.invalid && chinaStockForm.get('exchangeRate')?.touched">
               <div class="error-message" *ngIf="chinaStockForm.get('exchangeRate')?.invalid && chinaStockForm.get('exchangeRate')?.touched">
                 Exchange rate is required and must be greater than 0
@@ -95,6 +98,7 @@
             </div>
           </div>
 
+          <!-- Row 4: Shipping China-Thailand & Auto-calculated Avg -->
           <div class="field-row">
             <div class="form-group">
               <label for="shippingChinaToThaiBath">Shipping China to Thailand (฿)</label>
@@ -105,21 +109,47 @@
                 class="form-control"
                 type="number"
                 min="0"
-                step="0.01">
+                step="0.001">
             </div>
+
+            <!-- ⭐ แสดงค่าเฉลี่ย (read-only) -->
             <div class="form-group">
-              <label for="avgShippingPerPair">Average Shipping per Unit (฿)</label>
+              <label>Average Shipping per Unit (฿) <small class="text-muted">(Auto-calculated)</small></label>
               <input
-                id="avgShippingPerPair"
-                formControlName="avgShippingPerPair"
-                placeholder="Enter average shipping per unit"
                 class="form-control"
-                type="number"
-                min="0"
-                step="0.01">
+                [value]="formatNumber(avgShippingPerPair)"
+                readonly
+                disabled>
             </div>
           </div>
 
+          <!-- ⭐ Row 5: Buffer Section -->
+          <div class="field-row buffer-section">
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  formControlName="includeBuffer">
+                <span>คิดราคาเผื่อเสีย (Include Buffer)</span>
+              </label>
+            </div>
+
+            <div class="form-group" *ngIf="chinaStockForm.value.includeBuffer">
+              <label for="bufferPercentage">Buffer Percentage (%)</label>
+              <input
+                id="bufferPercentage"
+                formControlName="bufferPercentage"
+                placeholder="Enter buffer percentage (e.g., 5 for 5%)"
+                class="form-control"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1">
+              <small class="form-help">กำหนดเปอร์เซ็นต์เผื่อเสีย เช่น 5 หมายถึง +5%</small>
+            </div>
+          </div>
+
+          <!-- Row 6: Shop URL & Status -->
           <div class="field-row">
             <div class="form-group">
               <label for="shopURL">Shop URL</label>
@@ -158,7 +188,7 @@
       </div>
     </form>
 
-    <!-- China Stock Preview Card -->
+    <!-- ⭐ China Stock Preview Card (Updated) -->
     <div class="china-stock-preview" *ngIf="chinaStockForm.value.name">
       <h3>China Stock Preview</h3>
       <div class="preview-card">
@@ -168,30 +198,54 @@
             {{chinaStockForm.value.status || 'ACTIVE'}}
           </span>
         </div>
+
+        <!-- ⭐ Preview Details (Updated) -->
         <div class="preview-details">
           <div class="detail-item">
             <span class="label">Quantity:</span>
             <span class="value">{{chinaStockForm.value.quantity || 0}} units</span>
           </div>
           <div class="detail-item">
-            <span class="label">Unit Price:</span>
-            <span class="value">¥{{chinaStockForm.value.unitPriceYuan || 0}}</span>
+            <span class="label">Unit Price (¥):</span>
+            <span class="value">¥{{formatNumber(chinaStockForm.value.unitPriceYuan || 0)}}</span>
           </div>
           <div class="detail-item">
             <span class="label">Total Value (¥):</span>
-            <span class="value">¥{{totalValueYuan}}</span>
+            <span class="value">¥{{formatNumber(totalValueYuan)}}</span>
           </div>
           <div class="detail-item">
             <span class="label">Total (¥ + Shipping):</span>
-            <span class="value">¥{{totalYuan}}</span>
+            <span class="value">¥{{formatNumber(totalYuan)}}</span>
           </div>
           <div class="detail-item">
             <span class="label">Total (฿):</span>
-            <span class="value price">฿{{totalBath}}</span>
+            <span class="value price">฿{{formatNumber(totalBath)}}</span>
           </div>
           <div class="detail-item">
+            <span class="label">Shipping Cost (฿):</span>
+            <span class="value">฿{{formatNumber(chinaStockForm.value.shippingChinaToThaiBath || 0)}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Avg Shipping/Unit (฿):</span>
+            <span class="value">฿{{formatNumber(avgShippingPerPair)}}</span>
+          </div>
+
+          <!-- ⭐ แสดง Buffer ถ้ามี -->
+          <div class="detail-item" *ngIf="chinaStockForm.value.includeBuffer">
+            <span class="label">Buffer (+{{chinaStockForm.value.bufferPercentage || 0}}%):</span>
+            <span class="value buffer">฿{{formatNumber(totalWithBuffer - totalWithShipping)}}</span>
+          </div>
+
+          <!-- ⭐ Grand Total -->
+          <div class="detail-item total">
+            <span class="label">Grand Total:</span>
+            <span class="value price-highlight">฿{{formatNumber(totalWithBuffer)}}</span>
+          </div>
+
+          <!-- ⭐ Final Price Per Unit -->
+          <div class="detail-item">
             <span class="label">Final Price/Unit:</span>
-            <span class="value price">฿{{finalPricePerPair}}</span>
+            <span class="value price-highlight">฿{{formatNumber(finalPricePerPair)}}</span>
           </div>
         </div>
       </div>

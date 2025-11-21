@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 // Interface ที่รองรับทั้ง stockLot object และ stockLotId
 export interface ChinaStock {
@@ -9,8 +9,8 @@ export interface ChinaStock {
   lotDate?: string;
   shopURL?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
-  stockLotId?: number; // เพิ่ม field นี้สำหรับส่งไปยัง backend
-  stockLot?: {        // field นี้สำหรับรับจาก backend หรือใช้ใน form
+  stockLotId?: number;
+  stockLot?: {
     stockLotId: number;
     lotName: string;
   };
@@ -22,9 +22,14 @@ export interface ChinaStock {
   totalBath?: number;
   pricePerUnitBath?: number;
   shippingChinaToThaiBath?: number;
-  avgShippingPerPair?: number;
+  // ⭐ ลบออก - จะคำนวณอัตโนมัติ
+  // avgShippingPerPair?: number;
   finalPricePerPair?: number;
   exchangeRate: number;
+
+  // ⭐ เพิ่ม buffer fields
+  bufferPercentage?: number;
+  includeBuffer?: boolean;
 }
 
 @Injectable({
@@ -34,6 +39,15 @@ export class ChinaStockService {
   private apiUrl = 'https://www.chubbycharlieshop.com/api/china-stocks';
 
   constructor(private http: HttpClient) {}
+
+  // ⭐ เพิ่ม helper method ที่นี่ (ใน class)
+  formatNumber(num: number | undefined): string {
+    if (!num) return '0.000';
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    });
+  }
 
   getAllChinaStocks(): Observable<ChinaStock[]> {
     return this.http.get<ChinaStock[]>(this.apiUrl);
@@ -60,7 +74,7 @@ export class ChinaStockService {
   }
 
   createChinaStock(chinaStock: ChinaStock): Observable<ChinaStock> {
-    // แปลง object ให้เหมาะกับ backend
+    // ⭐ แก้ไข: ลบ avgShippingPerPair ออก + เพิ่ม buffer fields
     const payload = {
       name: chinaStock.name,
       shopURL: chinaStock.shopURL,
@@ -69,15 +83,17 @@ export class ChinaStockService {
       shippingWithinChinaYuan: chinaStock.shippingWithinChinaYuan || 0,
       exchangeRate: chinaStock.exchangeRate,
       shippingChinaToThaiBath: chinaStock.shippingChinaToThaiBath || 0,
-      avgShippingPerPair: chinaStock.avgShippingPerPair || 0,
+      // ⭐ ลบ avgShippingPerPair ออก
+      includeBuffer: chinaStock.includeBuffer || false,
+      bufferPercentage: chinaStock.bufferPercentage || 0,
       status: chinaStock.status || 'ACTIVE',
-      stockLotId: chinaStock.stockLotId || null // ส่ง stockLotId แทน stockLot object
+      stockLotId: chinaStock.stockLotId || null
     };
     return this.http.post<ChinaStock>(this.apiUrl, payload);
   }
 
   updateChinaStock(id: number, chinaStock: ChinaStock): Observable<ChinaStock> {
-    // แปลง object ให้เหมาะกับ backend
+    // ⭐ แก้ไข: ลบ avgShippingPerPair ออก + เพิ่ม buffer fields
     const payload = {
       name: chinaStock.name,
       shopURL: chinaStock.shopURL,
@@ -86,7 +102,9 @@ export class ChinaStockService {
       shippingWithinChinaYuan: chinaStock.shippingWithinChinaYuan || 0,
       exchangeRate: chinaStock.exchangeRate,
       shippingChinaToThaiBath: chinaStock.shippingChinaToThaiBath || 0,
-      avgShippingPerPair: chinaStock.avgShippingPerPair || 0,
+      // ⭐ ลบ avgShippingPerPair ออก
+      includeBuffer: chinaStock.includeBuffer || false,
+      bufferPercentage: chinaStock.bufferPercentage || 0,
       status: chinaStock.status || 'ACTIVE',
       stockLotId: chinaStock.stockLotId || null
     };
@@ -101,13 +119,12 @@ export class ChinaStockService {
     return this.http.patch<ChinaStock[]>(`${this.apiUrl}/lot/${stockLotId}/exchange-rate`, { exchangeRate });
   }
 
-  distributeShippingCosts(stockLotId: number): Observable<ChinaStock[]> {
-    return this.http.post<ChinaStock[]>(`${this.apiUrl}/lot/${stockLotId}/distribute-shipping`, {});
-  }
-
-  // เพิ่ม method ใหม่สำหรับ distribute shipping โดยระบุจำนวน
-  distributeShippingCostsWithAmount(stockLotId: number, totalShipping: number): Observable<ChinaStock[]> {
-    return this.http.post<ChinaStock[]>(`${this.apiUrl}/lot/${stockLotId}/distribute-shipping-with-amount`, { totalShipping });
+  // ⭐ แก้ไข: ใช้ endpoint เดียว รับ totalShipping
+  distributeShippingCosts(stockLotId: number, totalShipping: number): Observable<ChinaStock[]> {
+    return this.http.post<ChinaStock[]>(
+      `${this.apiUrl}/lot/${stockLotId}/distribute-shipping`,
+      { totalShipping }
+    );
   }
 
   deleteChinaStock(id: number): Observable<void> {

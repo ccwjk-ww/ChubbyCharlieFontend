@@ -17,10 +17,10 @@
         <div class="image-upload-section">
           <div class="image-preview-container">
             <img
-              [src]="imagePreview || '/images/products/default-product.jpg'"
+              [src]="imagePreview || '/images/products/logo.jpg'"
               alt="Product Preview"
               class="image-preview"
-              [class.default]="!imagePreview || imagePreview.includes('default-product.jpg')">
+              [class.default]="!imagePreview || imagePreview.includes('logo.jpg')">
 
             <div class="image-badge" *ngIf="!selectedFile && !currentImageUrl">
               <i class="bi-image"></i> Default Image

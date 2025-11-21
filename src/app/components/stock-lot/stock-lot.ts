@@ -12,6 +12,8 @@ import { StockLotService, StockLot } from '../../services/stock-lot.service';
   styleUrls: ['./stock-lot.css']
 })
 export class StockLotComponent implements OnInit {
+  // ⭐ เพิ่ม allStockLots เพื่อเก็บข้อมูลต้นฉบับ
+  allStockLots: StockLot[] = [];
   filteredStockLots: StockLot[] = [];
   paginatedStockLots: StockLot[] = [];
   searchTerm: string = '';
@@ -40,7 +42,8 @@ export class StockLotComponent implements OnInit {
     this.loading = true;
     this.stockLotService.getAllStockLots().subscribe({
       next: (stockLots) => {
-        this.filteredStockLots = stockLots;
+        // ⭐ เก็บข้อมูลต้นฉบับ
+        this.allStockLots = stockLots;
         this.applyFilters();
         this.loading = false;
       },
@@ -61,8 +64,12 @@ export class StockLotComponent implements OnInit {
     this.applyFilters();
   }
 
+  /**
+   * ⭐ แก้ไข applyFilters() ให้เริ่มจาก allStockLots
+   */
   applyFilters(): void {
-    let filtered = [...this.filteredStockLots];
+    // ⭐ เริ่มจากข้อมูลต้นฉบับทุกครั้ง
+    let filtered = [...this.allStockLots];
 
     // Apply search filter
     if (this.searchTerm.trim()) {
@@ -138,14 +145,68 @@ export class StockLotComponent implements OnInit {
   }
 
   deleteStockLot(stockLot: StockLot): void {
-    if (confirm(`Are you sure you want to delete ${stockLot.lotName}?`)) {
+    if (!stockLot.stockLotId) return;
+
+    let confirmMessage = '';
+
+    // ✅ ข้อความยืนยันพิเศษสำหรับ COMPLETED stock lot
+    if (stockLot.status === 'COMPLETED') {
+      confirmMessage =
+        `⚠️ คำเตือน: Stock Lot นี้มีสถานะ COMPLETED!\n\n` +
+        `Lot Name: ${stockLot.lotName}\n` +
+        `Import Date: ${this.formatDate(stockLot.importDate)}\n` +
+        `Status: ${stockLot.status}\n\n` +
+        `⚠️ การลบ Stock Lot ที่ COMPLETED อาจส่งผลต่อ:\n` +
+        `- Transaction ที่เชื่อมโยง\n` +
+        `- รายงานทางการเงิน\n` +
+        `- ข้อมูลสินค้าที่เกี่ยวข้อง\n\n` +
+        `⛔ การกระทำนี้ไม่สามารถย้อนกลับได้\n\n` +
+        `❓ คุณแน่ใจหรือไม่ที่จะลบ Stock Lot นี้?`;
+    } else {
+      // ข้อความยืนยันปกติ
+      confirmMessage =
+        `⚠️ ยืนยันการลบ Stock Lot\n\n` +
+        `Lot Name: ${stockLot.lotName}\n` +
+        `Import Date: ${this.formatDate(stockLot.importDate)}\n` +
+        `Status: ${stockLot.status}\n\n` +
+        `⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้`;
+    }
+
+    if (confirm(confirmMessage)) {
+      // ✅ Double confirmation สำหรับ COMPLETED stock lot
+      if (stockLot.status === 'COMPLETED') {
+        const doubleConfirm = confirm(
+          `🚨 ยืนยันอีกครั้ง!\n\n` +
+          `คุณกำลังจะลบ Stock Lot ที่มีสถานะ COMPLETED\n` +
+          `ซึ่งอาจส่งผลต่อความถูกต้องของข้อมูล\n\n` +
+          `กดตกลงเพื่อยืนยันการลบ`
+        );
+
+        if (!doubleConfirm) {
+          return;
+        }
+      }
+
+      this.loading = true;
+
       if (stockLot.stockLotId) {
         this.stockLotService.deleteStockLot(stockLot.stockLotId).subscribe({
           next: () => {
+            if (stockLot.status === 'COMPLETED') {
+              alert('✅ ลบ Stock Lot (COMPLETED) สำเร็จ\n\n⚠️ กรุณาตรวจสอบข้อมูลที่เกี่ยวข้องให้ถูกต้อง');
+            } else {
+              alert('✅ ลบ Stock Lot สำเร็จ');
+            }
             this.loadStockLots();
             this.closeDropdown();
+            this.loading = false;
           },
-          error: (error) => console.error('Error deleting stock lot:', error)
+          error: (error) => {
+            console.error('Error deleting stock lot:', error);
+            const errorMessage = error.message || 'เกิดข้อผิดพลาดในการลบ Stock Lot';
+            alert('❌ ' + errorMessage);
+            this.loading = false;
+          }
         });
       }
     }
@@ -185,14 +246,16 @@ export class StockLotComponent implements OnInit {
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('th-TH');
   }
 
   formatCurrency(amount: number | undefined): string {
-    if (!amount) return '฿0.00';
+    if (!amount) return '฿0.000';
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
-      currency: 'THB'
+      currency: 'THB',
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
     }).format(amount);
   }
 }

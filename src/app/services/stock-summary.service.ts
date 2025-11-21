@@ -10,7 +10,7 @@ export interface StockLotSummary {
   thaiTotalValue: number;
   thaiItemCount: number;
   thaiTotalQuantity: number;
-  grandTotalValue: number;
+  grandTotalValue: number; // ⭐ Grand Total (รวม Buffer)
   totalItemCount: number;
   totalQuantity: number;
 }
@@ -23,6 +23,7 @@ export interface SystemSummary {
   activeChinaItems: number;
   activeThaiItems: number;
   activeItems: number;
+  totalInventoryValue?: number; // ⭐ เพิ่ม Total Inventory Value (optional)
 }
 
 @Injectable({

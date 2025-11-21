@@ -9,7 +9,7 @@ export interface ThaiStock {
   lotDate?: string;
   shopURL?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
-  stockLotId: number; // เพิ่ม field นี้สำหรับส่งไปยัง backend
+  stockLotId?: number; // เปลี่ยนเป็น optional เพื่อให้ยืดหยุ่นกว่า
   stockLot?: {        // field นี้สำหรับรับจาก backend หรือใช้ใน form
     stockLotId: number;
     lotName: string;
@@ -19,6 +19,10 @@ export interface ThaiStock {
   shippingCost?: number;
   pricePerUnit?: number;
   pricePerUnitWithShipping?: number;
+
+  // ⭐ เพิ่ม Buffer fields
+  bufferPercentage?: number;
+  includeBuffer?: boolean;
 }
 
 @Injectable({
@@ -62,7 +66,11 @@ export class ThaiStockService {
       priceTotal: thaiStock.priceTotal,
       shippingCost: thaiStock.shippingCost || 0,
       status: thaiStock.status || 'ACTIVE',
-      stockLotId: thaiStock.stockLotId || null // ส่ง stockLotId แทน stockLot object
+      stockLotId: thaiStock.stockLotId || null, // ส่ง stockLotId แทน stockLot object
+
+      // ⭐ เพิ่ม buffer fields
+      includeBuffer: thaiStock.includeBuffer || false,
+      bufferPercentage: thaiStock.bufferPercentage || 0
     };
     return this.http.post<ThaiStock>(this.apiUrl, payload);
   }
@@ -76,7 +84,11 @@ export class ThaiStockService {
       priceTotal: thaiStock.priceTotal,
       shippingCost: thaiStock.shippingCost || 0,
       status: thaiStock.status || 'ACTIVE',
-      stockLotId: thaiStock.stockLotId || null
+      stockLotId: thaiStock.stockLotId || null,
+
+      // ⭐ เพิ่ม buffer fields
+      includeBuffer: thaiStock.includeBuffer || false,
+      bufferPercentage: thaiStock.bufferPercentage || 0
     };
     return this.http.put<ThaiStock>(`${this.apiUrl}/${id}`, payload);
   }

@@ -14,6 +14,8 @@ import {ChinaStock} from '../../services/china-stock.service';
   styleUrls: ['./thai-stock.css']
 })
 export class ThaiStockComponent implements OnInit {
+  // ⭐ เก็บ stocks ต้นฉบับแยกจาก filtered
+  allThaiStocks: ThaiStock[] = [];
   filteredThaiStocks: ThaiStock[] = [];
   paginatedThaiStocks: ThaiStock[] = [];
   searchTerm: string = '';
@@ -55,7 +57,8 @@ export class ThaiStockComponent implements OnInit {
     this.loading = true;
     this.thaiStockService.getAllThaiStocks().subscribe({
       next: (stocks) => {
-        this.filteredThaiStocks = stocks;
+        // ⭐ เก็บข้อมูลต้นฉบับ
+        this.allThaiStocks = stocks;
         this.applyFilters();
         this.loading = false;
       },
@@ -71,7 +74,7 @@ export class ThaiStockComponent implements OnInit {
     if (this.searchTerm.trim()) {
       this.thaiStockService.searchThaiStocks(this.searchTerm).subscribe({
         next: (stocks) => {
-          this.filteredThaiStocks = stocks;
+          this.allThaiStocks = stocks;
           this.applyFilters();
         },
         error: (error) => console.error('Error searching Thai stocks:', error)
@@ -86,17 +89,26 @@ export class ThaiStockComponent implements OnInit {
     this.applyFilters();
   }
 
+  /**
+   * ⭐ แก้ไข applyFilters() ให้ Filter ถูกต้อง
+   */
   applyFilters(): void {
-    let filtered = [...this.filteredThaiStocks];
+    // เริ่มจาก stocks ต้นฉบับ
+    let filtered = [...this.allThaiStocks];
 
+    // ⭐ Filter by Status
     if (this.selectedStatus !== 'ALL') {
       filtered = filtered.filter(stock => stock.status === this.selectedStatus);
     }
 
+    // ⭐ Filter by Lot (แก้ไขให้ถูกต้อง)
     if (this.selectedLot !== 'ALL') {
-      filtered = filtered.filter(stock =>
-        stock.stockLot?.toString() === this.selectedLot
-      );
+      const selectedLotId = Number(this.selectedLot);
+      filtered = filtered.filter(stock => {
+        // รองรับทั้ง stockLotId และ stockLot.stockLotId
+        const stockLotId = stock.stockLotId || stock.stockLot?.stockLotId;
+        return stockLotId === selectedLotId;
+      });
     }
 
     this.filteredThaiStocks = filtered;
@@ -197,20 +209,32 @@ export class ThaiStockComponent implements OnInit {
     this.activeThaiStock = null;
   }
 
+  calculateGrandTotal(stock: ThaiStock): number {
+    const priceTotal = stock.priceTotal || 0;
+    const shippingCost = stock.shippingCost || 0;
+    let total = priceTotal + shippingCost;
+
+    if (stock.includeBuffer && stock.bufferPercentage && stock.bufferPercentage > 0) {
+      total = total * (1 + stock.bufferPercentage / 100);
+    }
+
+    return total;
+  }
+
   formatCurrency(amount: number | undefined): string {
-    if (!amount) return '฿0.00';
+    if (!amount) return '฿0.000';
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
-      currency: 'THB'
+      currency: 'THB',
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
     }).format(amount);
   }
 
   getLotName(stock: ChinaStock | ThaiStock): string {
-    // รองรับทั้ง stockLot object และ stockLotId
     if (stock.stockLot?.lotName) {
       return stock.stockLot.lotName;
     } else if (stock.stockLotId) {
-      // หา lot name จาก stockLots array ที่โหลดมา
       const lot = this.stockLots.find(l => l.stockLotId === stock.stockLotId);
       return lot?.lotName || `Lot ID: ${stock.stockLotId}`;
     }

@@ -102,10 +102,12 @@ export class StockDashboardComponent implements OnInit {
   }
 
   formatCurrency(amount: number | undefined): string {
-    if (!amount) return '฿0.00';
+    if (!amount) return '฿0.000';
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
-      currency: 'THB'
+      currency: 'THB',
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
     }).format(amount);
   }
 

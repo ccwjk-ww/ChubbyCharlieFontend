@@ -289,7 +289,8 @@ export class ProductAddComponent implements OnInit {
   }
 
   getStockOptionDisplay(stockOption: StockOption): string {
-    return `${stockOption.name} (${stockOption.type}) - ฿${stockOption.unitCost.toFixed(2)}`;
+    const lotInfo = stockOption.lotName ? ` [${stockOption.lotName}]` : '';
+    return `${stockOption.name}${lotInfo} (${stockOption.type}) - ฿${stockOption.unitCost.toFixed(3)}`;
   }
 
   isFormValid(): boolean {

@@ -401,3 +401,83 @@
   color: #d1d5db;
 }
 
+/* Status container */
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ป้าย warning สำหรับ COMPLETED */
+.badge-warning-completed {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.6);
+  }
+}
+
+/* ปุ่มลบแบบ warning สำหรับ COMPLETED */
+.delete-item-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  width: 100%;
+  border: none;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.delete-item-warning:hover {
+  background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+  transform: translateX(4px);
+}
+
+.delete-item-warning i {
+  font-size: 14px;
+}
+
+/* ปุ่มลบปกติ */
+.delete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-item:hover {
+  background-color: #ffe5e5;
+  transform: translateX(4px);
+}
+
+.delete-item i {
+  font-size: 14px;
+}

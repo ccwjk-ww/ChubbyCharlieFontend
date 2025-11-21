@@ -33,14 +33,20 @@ export class ChinaStockAddComponent implements OnInit {
       shippingWithinChinaYuan: [0, [Validators.min(0)]],
       exchangeRate: ['', [Validators.required, Validators.min(0.1)]],
       shippingChinaToThaiBath: [0, [Validators.min(0)]],
-      avgShippingPerPair: [0, [Validators.min(0)]],
+      // ⭐ ลบ avgShippingPerPair ออก - จะคำนวณอัตโนมัติ
+
+      // ⭐ เพิ่ม buffer fields
+      includeBuffer: [false],
+      bufferPercentage: [0, [Validators.min(0), Validators.max(100)]],
+
       status: ['ACTIVE', Validators.required],
       stockLotId: ['']
     });
   }
 
   ngOnInit(): void {
-    this.stockItemId = this.route.snapshot.paramMap.get('id') ? Number(this.route.snapshot.paramMap.get('id')) : null;
+    this.stockItemId = this.route.snapshot.paramMap.get('id') ?
+      Number(this.route.snapshot.paramMap.get('id')) : null;
     this.isEditMode = !!this.stockItemId;
 
     this.loadStockLots();
@@ -71,9 +77,11 @@ export class ChinaStockAddComponent implements OnInit {
             shippingWithinChinaYuan: stock.shippingWithinChinaYuan || 0,
             exchangeRate: stock.exchangeRate,
             shippingChinaToThaiBath: stock.shippingChinaToThaiBath || 0,
-            avgShippingPerPair: stock.avgShippingPerPair || 0,
+            // ⭐ ลบ avgShippingPerPair - จะคำนวณเอง
+            includeBuffer: stock.includeBuffer || false,
+            bufferPercentage: stock.bufferPercentage || 0,
             status: stock.status || 'ACTIVE',
-            stockLotId: stock.stockLotId || ''  // แก้ไขให้ใช้ stockLotId โดยตรง
+            stockLotId: stock.stockLotId || ''
           });
         },
         error: (error) => console.error('Error loading China stock:', error)
@@ -92,32 +100,37 @@ export class ChinaStockAddComponent implements OnInit {
         shippingWithinChinaYuan: formValue.shippingWithinChinaYuan || 0,
         exchangeRate: formValue.exchangeRate,
         shippingChinaToThaiBath: formValue.shippingChinaToThaiBath || 0,
-        avgShippingPerPair: formValue.avgShippingPerPair || 0,
+        // ⭐ ลบ avgShippingPerPair ออก - backend จะคำนวณเอง
+
+        // ⭐ เพิ่ม buffer
+        includeBuffer: formValue.includeBuffer || false,
+        bufferPercentage: formValue.bufferPercentage || 0,
+
         status: formValue.status,
-        stockLotId: formValue.stockLotId  // ส่ง stockLotId แทน stockLot object
+        stockLotId: formValue.stockLotId
       };
 
       if (this.isEditMode && this.stockItemId) {
         this.chinaStockService.updateChinaStock(this.stockItemId, chinaStock).subscribe({
           next: () => {
-            alert('China stock updated successfully!');
+            alert('✅ China stock updated successfully!');
             this.router.navigate(['/china-stocks']);
           },
           error: (error) => {
             console.error('Error updating China stock:', error);
-            alert('Error updating China stock. Please try again.');
+            alert('❌ Error updating China stock. Please try again.');
           }
         });
       } else {
         this.chinaStockService.createChinaStock(chinaStock).subscribe({
           next: () => {
-            alert('China stock added successfully!');
+            alert('✅ China stock added successfully!');
             this.resetForm();
             this.router.navigate(['/china-stocks']);
           },
           error: (error) => {
             console.error('Error adding China stock:', error);
-            alert('Error adding China stock. Please try again.');
+            alert('❌ Error adding China stock. Please try again.');
           }
         });
       }
@@ -139,7 +152,8 @@ export class ChinaStockAddComponent implements OnInit {
       status: 'ACTIVE',
       shippingWithinChinaYuan: 0,
       shippingChinaToThaiBath: 0,
-      avgShippingPerPair: 0
+      includeBuffer: false,
+      bufferPercentage: 0
     });
   }
 
@@ -147,28 +161,85 @@ export class ChinaStockAddComponent implements OnInit {
     this.router.navigate(['/china-stocks']);
   }
 
-  // Computed properties for preview
+  // ============================================
+  // ⭐ Computed Properties (Getters)
+  // ============================================
+
+  /**
+   * คำนวณค่าส่งเฉลี่ยต่อหน่วยอัตโนมัติ
+   */
+  get avgShippingPerPair(): number {
+    const shipping = this.chinaStockForm.value.shippingChinaToThaiBath || 0;
+    const quantity = this.chinaStockForm.value.quantity || 1;
+    return quantity > 0 ? shipping / quantity : 0;
+  }
+
+  /**
+   * Total Value ในหน่วยหยวน
+   */
   get totalValueYuan(): number {
     const unitPrice = this.chinaStockForm.value.unitPriceYuan || 0;
     const quantity = this.chinaStockForm.value.quantity || 0;
     return unitPrice * quantity;
   }
 
+  /**
+   * Total Yuan (รวมค่าส่งในจีน)
+   */
   get totalYuan(): number {
     const totalValue = this.totalValueYuan;
     const shipping = this.chinaStockForm.value.shippingWithinChinaYuan || 0;
     return totalValue + shipping;
   }
 
+  /**
+   * Total Bath (แปลงจากหยวนเป็นบาท)
+   */
   get totalBath(): number {
     const totalYuan = this.totalYuan;
     const exchangeRate = this.chinaStockForm.value.exchangeRate || 0;
     return totalYuan * exchangeRate;
   }
 
+  /**
+   * Total With Shipping (รวมค่าส่งจีน-ไทย)
+   */
+  get totalWithShipping(): number {
+    const totalBath = this.totalBath;
+    const shipping = this.chinaStockForm.value.shippingChinaToThaiBath || 0;
+    return totalBath + shipping;
+  }
+
+  /**
+   * Total With Buffer (รวม buffer ถ้ามี)
+   */
+  get totalWithBuffer(): number {
+    const total = this.totalWithShipping;
+    const includeBuffer = this.chinaStockForm.value.includeBuffer;
+    const bufferPercent = this.chinaStockForm.value.bufferPercentage || 0;
+
+    if (includeBuffer && bufferPercent > 0) {
+      return total * (1 + bufferPercent / 100);
+    }
+    return total;
+  }
+
+  /**
+   * Final Price Per Unit (ราคาสุดท้ายต่อหน่วย)
+   */
   get finalPricePerPair(): number {
     const quantity = this.chinaStockForm.value.quantity || 1;
-    const avgShipping = this.chinaStockForm.value.avgShippingPerPair || 0;
-    return (this.totalBath / quantity) + avgShipping;
+    return quantity > 0 ? this.totalWithBuffer / quantity : 0;
+  }
+
+  /**
+   * ⭐ Format Number Helper (3 ทศนิยม + thousand separator)
+   */
+  formatNumber(num: number): string {
+    if (num === null || num === undefined) return '0.000';
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    });
   }
 }

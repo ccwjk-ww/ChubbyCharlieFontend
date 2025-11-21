@@ -63,8 +63,7 @@
           <th class="col-name">Product Name</th>
           <th class="col-lot">Lot</th>
           <th class="col-quantity">Qty</th>
-          <th class="col-price-total">Total Price (฿)</th>
-          <th class="col-shipping">Shipping (฿)</th>
+          <th class="col-price-total">Total (฿)</th>
           <th class="col-price-unit">Price/Unit (฿)</th>
           <th class="col-price-unit-shipping">Final Price/Unit (฿)</th>
           <th class="col-status">Status</th>
@@ -82,9 +81,10 @@
           </td>
           <td class="col-lot">{{getLotName(stock)}}</td>
           <td class="col-quantity">{{stock.quantity}}</td>
-          <td class="col-price-total">{{formatCurrency(stock.priceTotal)}}</td>
-          <td class="col-shipping">{{formatCurrency(stock.shippingCost)}}</td>
+          <!-- ⭐ แสดง Grand Total (รวม Buffer) -->
+          <td class="col-price-total">{{formatCurrency(calculateGrandTotal(stock))}}</td>
           <td class="col-price-unit">{{formatCurrency(stock.pricePerUnit)}}</td>
+          <!-- ⭐ แสดง Final Price/Unit (รวม Buffer) -->
           <td class="col-price-unit-shipping">{{formatCurrency(stock.pricePerUnitWithShipping)}}</td>
           <td class="col-status">
             <span [class]="getStatusClass(stock.status)">{{stock.status || 'N/A'}}</span>
@@ -117,7 +117,7 @@
           </td>
         </tr>
         <tr *ngIf="filteredThaiStocks.length === 0 && !loading">
-          <td colspan="10" class="empty-state">
+          <td colspan="9" class="empty-state">
             <i class="bi-house-fill"></i>
             <p>No Thai stock items found</p>
           </td>

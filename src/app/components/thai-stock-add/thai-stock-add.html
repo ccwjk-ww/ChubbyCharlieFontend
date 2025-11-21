@@ -8,6 +8,7 @@
     <form class="thai-stock-form" [formGroup]="thaiStockForm" (ngSubmit)="onSubmit()">
       <div class="form-row">
         <div class="form-fields">
+          <!-- Row 1: Name & Stock Lot -->
           <div class="field-row">
             <div class="form-group">
               <label for="name">Product Name <span class="required">*</span></label>
@@ -33,6 +34,7 @@
             </div>
           </div>
 
+          <!-- Row 2: Quantity & Total Price -->
           <div class="field-row">
             <div class="form-group">
               <label for="quantity">Quantity <span class="required">*</span></label>
@@ -58,7 +60,7 @@
                 class="form-control"
                 type="number"
                 min="0"
-                step="0.01"
+                step="0.001"
                 [class.error]="thaiStockForm.get('priceTotal')?.invalid && thaiStockForm.get('priceTotal')?.touched">
               <div class="error-message" *ngIf="thaiStockForm.get('priceTotal')?.invalid && thaiStockForm.get('priceTotal')?.touched">
                 Total price is required and must be 0 or greater
@@ -66,6 +68,7 @@
             </div>
           </div>
 
+          <!-- Row 3: Shipping Cost & Average Shipping -->
           <div class="field-row">
             <div class="form-group">
               <label for="shippingCost">Shipping Cost (฿)</label>
@@ -76,7 +79,55 @@
                 class="form-control"
                 type="number"
                 min="0"
-                step="0.01">
+                step="0.001">
+            </div>
+
+            <!-- ⭐ แสดงค่าเฉลี่ย (read-only) -->
+            <div class="form-group">
+              <label>Average Shipping per Unit (฿) <small class="text-muted">(Auto-calculated)</small></label>
+              <input
+                class="form-control"
+                [value]="formatNumber(avgShippingPerUnit)"
+                readonly
+                disabled>
+            </div>
+          </div>
+
+          <!-- ⭐ Row 4: Buffer Section -->
+          <div class="field-row buffer-section">
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  formControlName="includeBuffer">
+                <span>คิดราคาเผื่อเสีย (Include Buffer)</span>
+              </label>
+            </div>
+
+            <div class="form-group" *ngIf="thaiStockForm.value.includeBuffer">
+              <label for="bufferPercentage">Buffer Percentage (%)</label>
+              <input
+                id="bufferPercentage"
+                formControlName="bufferPercentage"
+                placeholder="Enter buffer percentage (e.g., 5 for 5%)"
+                class="form-control"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1">
+              <small class="form-help">กำหนดเปอร์เซ็นต์เผื่อเสีย เช่น 5 หมายถึง +5%</small>
+            </div>
+          </div>
+
+          <!-- Row 5: Shop URL & Status -->
+          <div class="field-row">
+            <div class="form-group">
+              <label for="shopURL">Shop URL</label>
+              <input
+                id="shopURL"
+                formControlName="shopURL"
+                placeholder="Enter shop URL (optional)"
+                class="form-control">
             </div>
             <div class="form-group">
               <label for="status">Status <span class="required">*</span></label>
@@ -92,17 +143,6 @@
               <div class="error-message" *ngIf="thaiStockForm.get('status')?.invalid && thaiStockForm.get('status')?.touched">
                 Status is required
               </div>
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="form-group">
-              <label for="shopURL">Shop URL</label>
-              <input
-                id="shopURL"
-                formControlName="shopURL"
-                placeholder="Enter shop URL (optional)"
-                class="form-control">
             </div>
           </div>
         </div>
@@ -121,7 +161,7 @@
       </div>
     </form>
 
-    <!-- Thai Stock Preview Card -->
+    <!-- ⭐ Thai Stock Preview Card (Updated) -->
     <div class="thai-stock-preview" *ngIf="thaiStockForm.value.name">
       <h3>Thai Stock Preview</h3>
       <div class="preview-card">
@@ -131,30 +171,50 @@
             {{thaiStockForm.value.status || 'ACTIVE'}}
           </span>
         </div>
+
+        <!-- ⭐ Preview Details (Updated) -->
         <div class="preview-details">
           <div class="detail-item">
             <span class="label">Quantity:</span>
             <span class="value">{{thaiStockForm.value.quantity || 0}} units</span>
           </div>
           <div class="detail-item">
-            <span class="label">Total Price:</span>
-            <span class="value price">฿{{(thaiStockForm.value.priceTotal || 0).toFixed(2)}}</span>
+            <span class="label">Total Price (฿):</span>
+            <span class="value">฿{{formatNumber(thaiStockForm.value.priceTotal || 0)}}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Shipping Cost:</span>
-            <span class="value">฿{{(thaiStockForm.value.shippingCost || 0).toFixed(2)}}</span>
+            <span class="label">Shipping Cost (฿):</span>
+            <span class="value">฿{{formatNumber(thaiStockForm.value.shippingCost || 0)}}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Total Cost:</span>
-            <span class="value price">฿{{totalCost.toFixed(2)}}</span>
+            <span class="label">Avg Shipping/Unit (฿):</span>
+            <span class="value">฿{{formatNumber(avgShippingPerUnit)}}</span>
           </div>
+          <div class="detail-item">
+            <span class="label">Total Cost (฿):</span>
+            <span class="value price">฿{{formatNumber(totalCost)}}</span>
+          </div>
+
+          <!-- ⭐ แสดง Buffer ถ้ามี -->
+          <div class="detail-item" *ngIf="thaiStockForm.value.includeBuffer">
+            <span class="label">Buffer (+{{thaiStockForm.value.bufferPercentage || 0}}%):</span>
+            <span class="value buffer">฿{{formatNumber(totalWithBuffer - totalCost)}}</span>
+          </div>
+
+          <!-- ⭐ Grand Total -->
+          <div class="detail-item total">
+            <span class="label">Grand Total:</span>
+            <span class="value price-highlight">฿{{formatNumber(totalWithBuffer)}}</span>
+          </div>
+
+          <!-- ⭐ Final Price Per Unit -->
           <div class="detail-item">
             <span class="label">Price per Unit:</span>
-            <span class="value">฿{{pricePerUnit.toFixed(2)}}</span>
+            <span class="value">฿{{formatNumber(pricePerUnit)}}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Final Price per Unit:</span>
-            <span class="value price">฿{{pricePerUnitWithShipping.toFixed(2)}}</span>
+            <span class="label">Final Price/Unit:</span>
+            <span class="value price-highlight">฿{{formatNumber(pricePerUnitWithShipping)}}</span>
           </div>
         </div>
       </div>

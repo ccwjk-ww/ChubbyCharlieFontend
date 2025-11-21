@@ -230,6 +230,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {environment} from '../../environments/environment';
 
 export interface Product {
   productId?: number;
@@ -308,14 +309,16 @@ export interface StockOption {
   unitCost: number;
   availableQuantity: number;
   status: string;
+  lotName?: string; // ⭐ เพิ่ม lotName
+  stockLotId?: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = 'https://www.chubbycharlieshop.com/api/products';
-  private stockApiUrl = 'https://www.chubbycharlieshop.com/api';
+  private apiUrl = environment.apiUrl + '/api/products';
+  private stockApiUrl = environment.apiUrl + '/api';
 
   constructor(private http: HttpClient) {}
 
@@ -323,7 +326,12 @@ export class ProductService {
   getAllProducts(): Observable<Product[]> {
     return this.http.get<Product[]>(this.apiUrl);
   }
-
+  /**
+   * ⭐ เพิ่ม: Get Available Stock Items
+   */
+  getAvailableStockItems(): Observable<StockOption[]> {
+    return this.http.get<StockOption[]>(`${this.apiUrl}/stock-options`);
+  }
   // Get product by ID
   getProductById(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
@@ -444,45 +452,45 @@ export class ProductService {
     return this.http.get<Product[]>(`${this.apiUrl}/affected-by-stock/${stockItemId}`);
   }
 
-  // Get available stock items (for dropdown)
-  getAvailableStockItems(): Observable<StockOption[]> {
-    return new Observable(observer => {
-      const chinaStocks$ = this.http.get<any[]>(`${this.stockApiUrl}/china-stocks`);
-      const thaiStocks$ = this.http.get<any[]>(`${this.stockApiUrl}/thai-stocks`);
-
-      Promise.all([
-        chinaStocks$.toPromise(),
-        thaiStocks$.toPromise()
-      ]).then(([chinaStocks, thaiStocks]) => {
-        const stockOptions: StockOption[] = [];
-
-        chinaStocks?.forEach(stock => {
-          stockOptions.push({
-            stockItemId: stock.stockItemId,
-            name: stock.name,
-            type: 'CHINA',
-            unitCost: stock.finalPricePerPair || 0,
-            availableQuantity: stock.quantity || 0,
-            status: stock.status
-          });
-        });
-
-        thaiStocks?.forEach(stock => {
-          stockOptions.push({
-            stockItemId: stock.stockItemId,
-            name: stock.name,
-            type: 'THAI',
-            unitCost: stock.pricePerUnitWithShipping || 0,
-            availableQuantity: stock.quantity || 0,
-            status: stock.status
-          });
-        });
-
-        observer.next(stockOptions);
-        observer.complete();
-      }).catch(error => observer.error(error));
-    });
-  }
+  // // Get available stock items (for dropdown)
+  // getAvailableStockItems(): Observable<StockOption[]> {
+  //   return new Observable(observer => {
+  //     const chinaStocks$ = this.http.get<any[]>(`${this.stockApiUrl}/china-stocks`);
+  //     const thaiStocks$ = this.http.get<any[]>(`${this.stockApiUrl}/thai-stocks`);
+  //
+  //     Promise.all([
+  //       chinaStocks$.toPromise(),
+  //       thaiStocks$.toPromise()
+  //     ]).then(([chinaStocks, thaiStocks]) => {
+  //       const stockOptions: StockOption[] = [];
+  //
+  //       chinaStocks?.forEach(stock => {
+  //         stockOptions.push({
+  //           stockItemId: stock.stockItemId,
+  //           name: stock.name,
+  //           type: 'CHINA',
+  //           unitCost: stock.finalPricePerPair || 0,
+  //           availableQuantity: stock.quantity || 0,
+  //           status: stock.status
+  //         });
+  //       });
+  //
+  //       thaiStocks?.forEach(stock => {
+  //         stockOptions.push({
+  //           stockItemId: stock.stockItemId,
+  //           name: stock.name,
+  //           type: 'THAI',
+  //           unitCost: stock.pricePerUnitWithShipping || 0,
+  //           availableQuantity: stock.quantity || 0,
+  //           status: stock.status
+  //         });
+  //       });
+  //
+  //       observer.next(stockOptions);
+  //       observer.complete();
+  //     }).catch(error => observer.error(error));
+  //   });
+  // }
 
   // Get product categories
   getProductCategories(): Observable<string[]> {

@@ -89,7 +89,17 @@
           <td class="col-arrival-date">{{formatDate(stockLot.arrivalDate)}}</td>
 
           <td class="col-status">
-            <span [class]="getStatusClass(stockLot.status)">{{stockLot.status || 'N/A'}}</span>
+            <div class="status-container">
+              <span [class]="getStatusClass(stockLot.status)">
+                {{stockLot.status || 'N/A'}}
+              </span>
+                        <!-- ✅ แสดงป้าย warning สำหรับ COMPLETED -->
+                        <span *ngIf="stockLot.status === 'COMPLETED'"
+                              class="badge badge-warning-completed"
+                              title="⚠️ COMPLETED - ลบได้แต่ต้องระวัง!">
+                <i class="bi-exclamation-triangle"></i>
+              </span>
+            </div>
           </td>
           <td class="col-action">
             <div class="action-dropdown">
@@ -123,8 +133,12 @@
                   </button>
                 </li>
                 <li>
-                  <button class="dropdown-item delete-item" (click)="deleteStockLot(stockLot)">
-                    <i class="bi-trash"></i> Delete
+                  <button
+                    [class]="stockLot.status === 'COMPLETED' ? 'dropdown-item delete-item-warning' : 'dropdown-item delete-item'"
+                    (click)="deleteStockLot(stockLot)"
+                    [title]="stockLot.status === 'COMPLETED' ? '⚠️ ลบ COMPLETED Stock Lot (ระวัง!)' : '🗑️ ลบ'">
+                    <i [class]="stockLot.status === 'COMPLETED' ? 'bi-trash-fill' : 'bi-trash'"></i>
+                    {{stockLot.status === 'COMPLETED' ? 'Delete (COMPLETED)' : 'Delete'}}
                   </button>
                 </li>
               </ul>
