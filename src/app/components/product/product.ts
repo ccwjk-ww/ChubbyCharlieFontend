@@ -617,21 +617,35 @@ export class ProductComponent implements OnInit {
         newStatus = 'ACTIVE';
       }
 
-      const updatedProduct: Product = {
-        ...product,
-        status: newStatus
-      };
+      console.log('🔄 Toggling status:', {
+        from: product.status,
+        to: newStatus,
+        productId: product.productId
+      });
 
-      this.productService.updateProduct(product.productId, updatedProduct).subscribe({
-        next: () => {
-          this.loadProducts();
+      // ⭐ ใช้ updateProductStatus แทน updateProduct
+      this.productService.updateProductStatus(product.productId, newStatus).subscribe({
+        next: (updatedProduct) => {
+          console.log('✅ Status updated successfully:', updatedProduct);
+
+          // อัปเดตข้อมูลใน local array
+          const index = this.filteredProducts.findIndex(p => p.productId === product.productId);
+          if (index !== -1) {
+            this.filteredProducts[index] = updatedProduct;
+          }
+
+          this.updatePaginatedData();
           this.closeDropdown();
+
+          alert(`เปลี่ยนสถานะเป็น "${newStatus === 'ACTIVE' ? 'ใช้งาน' : 'ไม่ใช้งาน'}" สำเร็จ!`);
         },
-        error: (error) => console.error('Error updating product status:', error)
+        error: (error) => {
+          console.error('❌ Error updating product status:', error);
+          alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ: ' + (error.error?.message || error.message));
+        }
       });
     }
   }
-
   recalculateProductCost(product: Product): void {
     if (product.productId) {
       this.productService.recalculateProductCost(product.productId).subscribe({

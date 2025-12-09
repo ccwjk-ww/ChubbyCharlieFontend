@@ -1,7 +1,23 @@
+// stock-forecast.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// ========== เพิ่ม DTOs ใหม่สำหรับ AI ==========
+export interface AIActionItem {
+  priority: string;
+  action: string;
+  timeline: string;
+}
+
+export interface AIRecommendationDTO {
+  urgentItems: StockForecastDTO[];
+  totalBudgetNeeded: number;
+  timestamp: string;
+  aiPoweredBy: string;
+}
+
+// เพิ่มฟิลด์ใหม่ใน StockForecastDTO
 export interface StockForecastDTO {
   forecastId: number;
   stockItemId: number;
@@ -23,6 +39,18 @@ export interface StockForecastDTO {
   lastCalculatedDate: string;
   safetyStockDays: number;
   leadTimeDays: number;
+
+  // ===== เพิ่มฟิลด์ใหม่สำหรับ AI =====
+  aiPowered?: boolean;
+  aiAnalysis?: string;
+  aiTrend?: string;
+  aiTrendConfidence?: number;
+  aiSeasonalPattern?: string;
+  aiPredictedDailyUsage?: number;
+  aiRiskFactors?: string[];
+  aiActionItems?: AIActionItem[];
+  aiCostImpact?: string;
+  aiOptimalReorderPoint?: number;
 }
 
 export interface StockForecastSummaryDTO {
@@ -35,6 +63,10 @@ export interface StockForecastSummaryDTO {
   criticalItemsCost: number;
   highUrgencyItemsCost: number;
   lastUpdated: string;
+
+  // เพิ่มสำหรับ AI
+  aiEnhancedItems?: number;
+  aiRecommendationsCount?: number;
 }
 
 export interface OrderGroupDTO {
@@ -60,11 +92,39 @@ export interface StockOrderRecommendationDTO {
 export class StockForecastService {
   private apiUrl = 'https://www.chubbycharlieshop.com/api/stock-forecast';
   private adminApiUrl = 'https://www.chubbycharlieshop.com/api/stock-forecast/admin';
-
+  // private apiUrl = 'http://localhost:8080/api/stock-forecast';
+  // private adminApiUrl = 'http://localhost:8080/api/stock-forecast/admin';
   constructor(private http: HttpClient) {}
 
   // ============================================
-  // Calculation APIs
+  // 🤖 AI-Enhanced Calculation APIs
+  // ============================================
+
+  /**
+   * Calculate all forecasts with AI enhancement
+   */
+  calculateAllForecastsWithAI(analysisBaseDays: number = 90): Observable<any> {
+    const params = new HttpParams().set('analysisBaseDays', analysisBaseDays.toString());
+    return this.http.post(`${this.apiUrl}/calculate-all-ai`, null, { params });
+  }
+
+  /**
+   * Calculate single stock forecast with AI
+   */
+  calculateStockForecastWithAI(stockItemId: number, analysisBaseDays: number = 90): Observable<any> {
+    const params = new HttpParams().set('analysisBaseDays', analysisBaseDays.toString());
+    return this.http.post(`${this.apiUrl}/calculate-ai/${stockItemId}`, null, { params });
+  }
+
+  /**
+   * Get AI-powered order recommendations
+   */
+  getAIRecommendations(): Observable<AIRecommendationDTO> {
+    return this.http.get<AIRecommendationDTO>(`${this.apiUrl}/ai-recommendations`);
+  }
+
+  // ============================================
+  // Existing Calculation APIs
   // ============================================
 
   calculateAllForecasts(analysisBaseDays: number = 90): Observable<any> {

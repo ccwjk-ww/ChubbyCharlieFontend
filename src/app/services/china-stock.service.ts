@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// Interface ที่รองรับทั้ง stockLot object และ stockLotId
+// ⭐ อัปเดต Interface รองรับ Quantity Tracking
 export interface ChinaStock {
   stockItemId?: number;
   name: string;
@@ -14,20 +14,24 @@ export interface ChinaStock {
     stockLotId: number;
     lotName: string;
   };
+
+  // ⭐ Quantity Management
+  originalQuantity?: number;    // จำนวนทั้งหมด (ตอนนำเข้า)
+  currentQuantity?: number;     // จำนวนคงเหลือ (ปัจจุบัน)
+  usedQuantity?: number;        // จำนวนที่ใช้ไป
+  usagePercentage?: number;     // เปอร์เซ็นต์ที่ใช้ไป
+  remainingPercentage?: number; // เปอร์เซ็นต์ที่เหลือ
+  quantity?: number;            // Backward compatibility
+
   unitPriceYuan: number;
-  quantity: number;
   totalValueYuan?: number;
   shippingWithinChinaYuan?: number;
   totalYuan?: number;
   totalBath?: number;
   pricePerUnitBath?: number;
   shippingChinaToThaiBath?: number;
-  // ⭐ ลบออก - จะคำนวณอัตโนมัติ
-  // avgShippingPerPair?: number;
   finalPricePerPair?: number;
   exchangeRate: number;
-
-  // ⭐ เพิ่ม buffer fields
   bufferPercentage?: number;
   includeBuffer?: boolean;
 }
@@ -40,13 +44,36 @@ export class ChinaStockService {
 
   constructor(private http: HttpClient) {}
 
-  // ⭐ เพิ่ม helper method ที่นี่ (ใน class)
+  // ⭐ Format number ให้เหลือ 2 ทศนิยม
   formatNumber(num: number | undefined): string {
-    if (!num) return '0.000';
+    if (!num) return '0.00';
     return num.toLocaleString('en-US', {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
+  }
+
+  // ⭐ Format Quantity
+  formatQuantity(stock: ChinaStock): string {
+    const current = stock.currentQuantity || stock.quantity || 0;
+    const original = stock.originalQuantity || current;
+    return `${current} / ${original}`;
+  }
+
+  // ⭐ Get Usage Color
+  getUsageColor(percentage: number | undefined): string {
+    if (!percentage) return 'text-success';
+    if (percentage < 30) return 'text-success';
+    if (percentage < 70) return 'text-warning';
+    return 'text-danger';
+  }
+
+  // ⭐ Get Remaining Color
+  getRemainingColor(percentage: number | undefined): string {
+    if (!percentage) return 'text-danger';
+    if (percentage >= 70) return 'text-success';
+    if (percentage >= 30) return 'text-warning';
+    return 'text-danger';
   }
 
   getAllChinaStocks(): Observable<ChinaStock[]> {
@@ -74,16 +101,14 @@ export class ChinaStockService {
   }
 
   createChinaStock(chinaStock: ChinaStock): Observable<ChinaStock> {
-    // ⭐ แก้ไข: ลบ avgShippingPerPair ออก + เพิ่ม buffer fields
     const payload = {
       name: chinaStock.name,
       shopURL: chinaStock.shopURL,
       unitPriceYuan: chinaStock.unitPriceYuan,
-      quantity: chinaStock.quantity,
+      quantity: chinaStock.quantity || chinaStock.currentQuantity,
       shippingWithinChinaYuan: chinaStock.shippingWithinChinaYuan || 0,
       exchangeRate: chinaStock.exchangeRate,
       shippingChinaToThaiBath: chinaStock.shippingChinaToThaiBath || 0,
-      // ⭐ ลบ avgShippingPerPair ออก
       includeBuffer: chinaStock.includeBuffer || false,
       bufferPercentage: chinaStock.bufferPercentage || 0,
       status: chinaStock.status || 'ACTIVE',
@@ -93,16 +118,14 @@ export class ChinaStockService {
   }
 
   updateChinaStock(id: number, chinaStock: ChinaStock): Observable<ChinaStock> {
-    // ⭐ แก้ไข: ลบ avgShippingPerPair ออก + เพิ่ม buffer fields
     const payload = {
       name: chinaStock.name,
       shopURL: chinaStock.shopURL,
       unitPriceYuan: chinaStock.unitPriceYuan,
-      quantity: chinaStock.quantity,
+      quantity: chinaStock.quantity || chinaStock.currentQuantity,
       shippingWithinChinaYuan: chinaStock.shippingWithinChinaYuan || 0,
       exchangeRate: chinaStock.exchangeRate,
       shippingChinaToThaiBath: chinaStock.shippingChinaToThaiBath || 0,
-      // ⭐ ลบ avgShippingPerPair ออก
       includeBuffer: chinaStock.includeBuffer || false,
       bufferPercentage: chinaStock.bufferPercentage || 0,
       status: chinaStock.status || 'ACTIVE',
@@ -119,7 +142,6 @@ export class ChinaStockService {
     return this.http.patch<ChinaStock[]>(`${this.apiUrl}/lot/${stockLotId}/exchange-rate`, { exchangeRate });
   }
 
-  // ⭐ แก้ไข: ใช้ endpoint เดียว รับ totalShipping
   distributeShippingCosts(stockLotId: number, totalShipping: number): Observable<ChinaStock[]> {
     return this.http.post<ChinaStock[]>(
       `${this.apiUrl}/lot/${stockLotId}/distribute-shipping`,

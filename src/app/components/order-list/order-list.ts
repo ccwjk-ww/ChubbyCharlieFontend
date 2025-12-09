@@ -48,6 +48,7 @@ export class OrderListComponent implements OnInit {
     { value: 'ALL', label: 'ทุกแหล่ง' },
     { value: 'SHOP_24', label: '24Shop' },
     { value: 'SHOPEE', label: 'Shopee' },
+    { value: 'TIKTOK', label: 'TikTok' },  // ⭐ เพิ่ม TikTok
     { value: 'MANUAL', label: 'Manual' }
   ];
 
@@ -295,6 +296,7 @@ export class OrderListComponent implements OnInit {
     switch (source) {
       case 'SHOP_24': return 'badge badge-blue';
       case 'SHOPEE': return 'badge badge-orange';
+      case 'TIKTOK': return 'badge badge-tiktok';  // ⭐ เพิ่ม TikTok style
       case 'MANUAL': return 'badge badge-gray';
       default: return 'badge badge-gray';
     }

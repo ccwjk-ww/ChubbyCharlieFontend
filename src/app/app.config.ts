@@ -10,9 +10,10 @@
 //     provideRouter(routes)
 //   ]
 // };
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import {ApplicationConfig, importProvidersFrom, provideZoneChangeDetection} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { MatDialogModule } from '@angular/material/dialog';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { routes } from './app.routes';
@@ -22,7 +23,8 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(),
-    provideAnimations(),
+    provideAnimations(), // ⭐ เพิ่ม
+    importProvidersFrom(MatDialogModule), // ⭐ เพิ่ม
     provideCharts(withDefaultRegisterables())
   ]
 };

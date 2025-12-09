@@ -14,7 +14,6 @@ import {ChinaStock} from '../../services/china-stock.service';
   styleUrls: ['./thai-stock.css']
 })
 export class ThaiStockComponent implements OnInit {
-  // ⭐ เก็บ stocks ต้นฉบับแยกจาก filtered
   allThaiStocks: ThaiStock[] = [];
   filteredThaiStocks: ThaiStock[] = [];
   paginatedThaiStocks: ThaiStock[] = [];
@@ -30,7 +29,7 @@ export class ThaiStockComponent implements OnInit {
   activeThaiStock: ThaiStock | null = null;
 
   constructor(
-    private thaiStockService: ThaiStockService,
+    public thaiStockService: ThaiStockService, // ⭐ เปลี่ยนเป็น public
     private stockLotService: StockLotService,
     private router: Router
   ) {}
@@ -57,7 +56,6 @@ export class ThaiStockComponent implements OnInit {
     this.loading = true;
     this.thaiStockService.getAllThaiStocks().subscribe({
       next: (stocks) => {
-        // ⭐ เก็บข้อมูลต้นฉบับ
         this.allThaiStocks = stocks;
         this.applyFilters();
         this.loading = false;
@@ -89,23 +87,16 @@ export class ThaiStockComponent implements OnInit {
     this.applyFilters();
   }
 
-  /**
-   * ⭐ แก้ไข applyFilters() ให้ Filter ถูกต้อง
-   */
   applyFilters(): void {
-    // เริ่มจาก stocks ต้นฉบับ
     let filtered = [...this.allThaiStocks];
 
-    // ⭐ Filter by Status
     if (this.selectedStatus !== 'ALL') {
       filtered = filtered.filter(stock => stock.status === this.selectedStatus);
     }
 
-    // ⭐ Filter by Lot (แก้ไขให้ถูกต้อง)
     if (this.selectedLot !== 'ALL') {
       const selectedLotId = Number(this.selectedLot);
       filtered = filtered.filter(stock => {
-        // รองรับทั้ง stockLotId และ stockLot.stockLotId
         const stockLotId = stock.stockLotId || stock.stockLot?.stockLotId;
         return stockLotId === selectedLotId;
       });
@@ -221,13 +212,14 @@ export class ThaiStockComponent implements OnInit {
     return total;
   }
 
+  // ⭐ ปรับให้แสดง 2 ทศนิยม
   formatCurrency(amount: number | undefined): string {
-    if (!amount) return '฿0.000';
+    if (!amount) return '฿0.00';
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
       currency: 'THB',
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   }
 

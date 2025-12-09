@@ -1,303 +1,3 @@
-<!--<div class="upload-container">-->
-<!--  <div class="upload-header">-->
-<!--    <div class="back-button" (click)="goBack()">-->
-<!--      <i class="bi-arrow-left"></i> กลับ-->
-<!--    </div>-->
-<!--    <h1>อัพโหลดออเดอร์</h1>-->
-<!--    <p class="subtitle">อัพโหลด PDF จาก 24Shop หรือ Excel จาก Shopee</p>-->
-<!--  </div>-->
-
-<!--  <div class="upload-content">-->
-<!--    &lt;!&ndash; Upload Type Selection &ndash;&gt;-->
-<!--    <div class="upload-type-section">-->
-<!--      <h3>เลือกประเภทไฟล์</h3>-->
-<!--      <div class="type-options">-->
-<!--        <div class="type-option"-->
-<!--             [class.active]="uploadType === '24shop'"-->
-<!--             (click)="uploadType = '24shop'; removeFile()">-->
-<!--          <i class="bi-file-earmark-pdf"></i>-->
-<!--          <div class="type-info">-->
-<!--            <h4>24Shop</h4>-->
-<!--            <p>อัพโหลดไฟล์ PDF จาก 24Shopping</p>-->
-<!--          </div>-->
-<!--        </div>-->
-
-<!--        <div class="type-option"-->
-<!--             [class.active]="uploadType === 'shopee'"-->
-<!--             (click)="uploadType = 'shopee'; removeFile()">-->
-<!--          <i class="bi-file-earmark-excel"></i>-->
-<!--          <div class="type-info">-->
-<!--            <h4>Shopee</h4>-->
-<!--            <p>อัพโหลดไฟล์ Excel จาก Shopee</p>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; ข้อมูลออเดอร์ (เฉพาะ 24Shop) &ndash;&gt;-->
-<!--    <div class="order-info-section" *ngIf="uploadType === '24shop'">-->
-<!--      <h3>ข้อมูลออเดอร์</h3>-->
-
-<!--      <div class="order-form-grid">-->
-<!--        <div class="form-group">-->
-<!--          <label class="required">เลขที่ออเดอร์ (PO Number)</label>-->
-<!--          <input-->
-<!--            type="text"-->
-<!--            class="form-control"-->
-<!--            [(ngModel)]="orderNumber"-->
-<!--            placeholder="เช่น CT37445675"-->
-<!--            required>-->
-<!--          <small class="form-hint">ระบุเลขที่ PO จากเอกสาร</small>-->
-<!--        </div>-->
-
-<!--        <div class="form-group" style="position: relative;">-->
-<!--          <label class="required">เลือกลูกค้า</label>-->
-<!--          <input-->
-<!--            type="text"-->
-<!--            class="form-control"-->
-<!--            [(ngModel)]="searchCustomerTerm"-->
-<!--            (input)="onCustomerSearch()"-->
-<!--            (focus)="showCustomerDropdown = true"-->
-<!--            (blur)="hideCustomerDropdown()"-->
-<!--            placeholder="ค้นหาชื่อหรือเบอร์โทร"-->
-<!--            required>-->
-<!--          <small class="form-hint" *ngIf="selectedCustomerId">-->
-<!--            ✓ เลือกลูกค้าแล้ว-->
-<!--          </small>-->
-
-<!--          <div class="customer-dropdown" *ngIf="showCustomerDropdown && filteredCustomers.length > 0">-->
-<!--            <div-->
-<!--              class="customer-item"-->
-<!--              *ngFor="let customer of filteredCustomers"-->
-<!--              (mousedown)="selectCustomer(customer)">-->
-<!--              <span class="customer-name">{{customer.customerName}}</span>-->
-<!--              <span class="customer-phone" *ngIf="customer.customerPhone">{{customer.customerPhone}}</span>-->
-<!--            </div>-->
-<!--          </div>-->
-
-<!--          <div class="no-customers" *ngIf="showCustomerDropdown && filteredCustomers.length === 0">-->
-<!--            ไม่พบลูกค้า-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; File Upload Area &ndash;&gt;-->
-<!--    <div class="file-upload-section">-->
-<!--      <div class="upload-area"-->
-<!--           (dragover)="onDragOver($event)"-->
-<!--           (drop)="onDrop($event)"-->
-<!--           [class.has-file]="selectedFile">-->
-
-<!--        <div class="upload-placeholder" *ngIf="!selectedFile">-->
-<!--          <i class="bi-cloud-upload"></i>-->
-<!--          <h3>ลากไฟล์มาวางที่นี่</h3>-->
-<!--          <p>หรือคลิกเพื่อเลือกไฟล์</p>-->
-<!--          <input type="file"-->
-<!--                 #fileInput-->
-<!--                 (change)="onFileSelected($event)"-->
-<!--                 [accept]="uploadType === '24shop' ? '.pdf' : '.xlsx,.xls'"-->
-<!--                 style="display: none;">-->
-<!--          <button class="browse-btn" (click)="fileInput.click()">-->
-<!--            เลือกไฟล์-->
-<!--          </button>-->
-<!--          <small class="file-hint">-->
-<!--            รองรับไฟล์: {{uploadType === '24shop' ? 'PDF' : 'Excel (XLSX, XLS)'}}-->
-<!--          </small>-->
-<!--        </div>-->
-
-<!--        <div class="file-info" *ngIf="selectedFile">-->
-<!--          <i [class]="getFileIcon()"></i>-->
-<!--          <div class="file-details">-->
-<!--            <h4>{{selectedFile.name}}</h4>-->
-<!--            <p>{{formatFileSize(selectedFile.size)}}</p>-->
-<!--          </div>-->
-<!--          <button class="remove-file-btn" (click)="removeFile()">-->
-<!--            <i class="bi-x"></i>-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </div>-->
-
-<!--      &lt;!&ndash; Options &ndash;&gt;-->
-<!--      <div class="upload-options" *ngIf="selectedFile">-->
-<!--        <label class="checkbox-label">-->
-<!--          <input type="checkbox" [(ngModel)]="autoDeductStock">-->
-<!--          <span>ตัด Stock อัตโนมัติหลังอัพโหลด</span>-->
-<!--          <small>ระบบจะตัด Stock ตามจำนวนสินค้าในออเดอร์ทันที</small>-->
-<!--        </label>-->
-<!--      </div>-->
-
-<!--      &lt;!&ndash; Action Buttons &ndash;&gt;-->
-<!--      <div class="upload-actions" *ngIf="selectedFile">-->
-<!--        <button class="preview-btn"-->
-<!--                (click)="previewFile()"-->
-<!--                [disabled]="uploading">-->
-<!--          <i class="bi-eye"></i>-->
-<!--          ดูตัวอย่าง-->
-<!--        </button>-->
-
-<!--        <button class="upload-btn"-->
-<!--                (click)="uploadFile()"-->
-<!--                [disabled]="uploading">-->
-<!--          <div class="loading-spinner" *ngIf="uploading"></div>-->
-<!--          <i class="bi-upload" *ngIf="!uploading"></i>-->
-<!--          {{uploading ? 'กำลังอัพโหลด...' : 'อัพโหลด'}}-->
-<!--        </button>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Preview Section สำหรับ 24Shop &ndash;&gt;-->
-<!--    <div class="preview-section" *ngIf="previewItems.length > 0 && uploadType === '24shop'">-->
-<!--      <h3>ตัวอย่างรายการสินค้า ({{previewItems.length}} รายการ)</h3>-->
-<!--      <div class="preview-table">-->
-<!--        <table>-->
-<!--          <thead>-->
-<!--          <tr>-->
-<!--            <th>SKU</th>-->
-<!--            <th>ชื่อสินค้า</th>-->
-<!--            <th>จำนวน</th>-->
-<!--            <th>ราคา/หน่วย</th>-->
-<!--            <th>รวม</th>-->
-<!--          </tr>-->
-<!--          </thead>-->
-<!--          <tbody>-->
-<!--          <tr *ngFor="let item of previewItems">-->
-<!--            <td>{{item.productSku}}</td>-->
-<!--            <td>{{item.productName}}</td>-->
-<!--            <td>{{item.quantity}}</td>-->
-<!--            <td>{{formatCurrency(item.unitPrice)}}</td>-->
-<!--            <td>{{formatCurrency(item.totalPrice)}}</td>-->
-<!--          </tr>-->
-<!--          </tbody>-->
-<!--        </table>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Preview Section สำหรับ Shopee &ndash;&gt;-->
-<!--    <div class="preview-section" *ngIf="previewOrders.length > 0 && uploadType === 'shopee'">-->
-<!--      <h3>ตัวอย่างออเดอร์</h3>-->
-<!--      <div class="preview-cards">-->
-<!--        <div class="preview-card" *ngFor="let order of previewOrders">-->
-<!--          <div class="preview-header">-->
-<!--            <h4>{{order.orderNumber}}</h4>-->
-<!--            <span class="preview-source">{{order.source === 'SHOP_24' ? '24Shop' : 'Shopee'}}</span>-->
-<!--          </div>-->
-
-<!--          <div class="preview-body">-->
-<!--            <div class="preview-row">-->
-<!--              <span class="label">ลูกค้า:</span>-->
-<!--              <span class="value">{{order.customerName}}</span>-->
-<!--            </div>-->
-<!--            <div class="preview-row" *ngIf="order.customerPhone">-->
-<!--              <span class="label">เบอร์โทร:</span>-->
-<!--              <span class="value">{{order.customerPhone}}</span>-->
-<!--            </div>-->
-<!--            <div class="preview-row" *ngIf="order.shippingAddress">-->
-<!--              <span class="label">ที่อยู่:</span>-->
-<!--              <span class="value">{{order.shippingAddress}}</span>-->
-<!--            </div>-->
-<!--            <div class="preview-row">-->
-<!--              <span class="label">ยอดรวม:</span>-->
-<!--              <span class="value price">{{formatCurrency(order.netAmount)}}</span>-->
-<!--            </div>-->
-<!--          </div>-->
-
-<!--          <div class="preview-items" *ngIf="order.orderItems && order.orderItems.length > 0">-->
-<!--            <h5>รายการสินค้า ({{order.orderItems.length}} รายการ)</h5>-->
-<!--            <div class="preview-item" *ngFor="let item of order.orderItems">-->
-<!--              <span class="item-name">{{item.productName}}</span>-->
-<!--              <span class="item-qty">x {{item.quantity}}</span>-->
-<!--              <span class="item-price">{{formatCurrency(item.totalPrice)}}</span>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Upload Result &ndash;&gt;-->
-<!--    <div class="result-section" *ngIf="uploadResult && !uploading">-->
-<!--      <div class="result-card" [class.success]="uploadResult.success" [class.error]="!uploadResult.success">-->
-<!--        <div class="result-icon">-->
-<!--          <i class="bi-check-circle" *ngIf="uploadResult.success"></i>-->
-<!--          <i class="bi-x-circle" *ngIf="!uploadResult.success"></i>-->
-<!--        </div>-->
-<!--        <div class="result-content">-->
-<!--          <h3>{{uploadResult.success ? 'อัพโหลดสำเร็จ' : 'อัพโหลดไม่สำเร็จ'}}</h3>-->
-<!--          <p>{{uploadResult.message}}</p>-->
-
-<!--          <div class="result-stats" *ngIf="uploadResult.success && uploadType === 'shopee'">-->
-<!--            <div class="stat-item">-->
-<!--              <span class="stat-label">ทั้งหมด:</span>-->
-<!--              <span class="stat-value">{{uploadResult.totalOrders}}</span>-->
-<!--            </div>-->
-<!--            <div class="stat-item success">-->
-<!--              <span class="stat-label">สำเร็จ:</span>-->
-<!--              <span class="stat-value">{{uploadResult.successCount}}</span>-->
-<!--            </div>-->
-<!--            <div class="stat-item error" *ngIf="uploadResult.errorCount > 0">-->
-<!--              <span class="stat-label">ล้มเหลว:</span>-->
-<!--              <span class="stat-value">{{uploadResult.errorCount}}</span>-->
-<!--            </div>-->
-<!--          </div>-->
-
-<!--          &lt;!&ndash; Stock Deduction Messages &ndash;&gt;-->
-<!--          <div class="stock-messages" *ngIf="uploadMessages.length > 0">-->
-<!--            <h4>การตัด Stock:</h4>-->
-<!--            <ul>-->
-<!--              <li *ngFor="let message of uploadMessages"-->
-<!--                  [class.success]="message.startsWith('✓')"-->
-<!--                  [class.error]="message.startsWith('✗')">-->
-<!--                {{message}}-->
-<!--              </li>-->
-<!--            </ul>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Instructions &ndash;&gt;-->
-<!--    <div class="instructions-section">-->
-<!--      <h3>คำแนะนำ</h3>-->
-<!--      <div class="instruction-cards">-->
-<!--        <div class="instruction-card">-->
-<!--          <div class="instruction-icon">-->
-<!--            <i class="bi-file-earmark-pdf"></i>-->
-<!--          </div>-->
-<!--          <h4>24Shop (PDF)</h4>-->
-<!--          <ul>-->
-<!--            <li>ใช้ไฟล์ PDF จาก Purchase Order ของ 24Shopping</li>-->
-<!--            <li>ระบุเลข PO และเลือกลูกค้าก่อนอัพโหลด</li>-->
-<!--            <li>ระบบจะอ่านข้อมูลสินค้าโดยอัตโนมัติ</li>-->
-<!--          </ul>-->
-<!--        </div>-->
-
-<!--        <div class="instruction-card">-->
-<!--          <div class="instruction-icon">-->
-<!--            <i class="bi-file-earmark-excel"></i>-->
-<!--          </div>-->
-<!--          <h4>Shopee (Excel)</h4>-->
-<!--          <ul>-->
-<!--            <li>ใช้ไฟล์ Excel ที่ Export จาก Shopee Seller Center</li>-->
-<!--            <li>ควรมี Column: Order Number, Customer Name, Product, Quantity, Price</li>-->
-<!--            <li>รองรับไฟล์ .xlsx และ .xls</li>-->
-<!--          </ul>-->
-<!--        </div>-->
-
-<!--        <div class="instruction-card">-->
-<!--          <div class="instruction-icon">-->
-<!--            <i class="bi-box-seam"></i>-->
-<!--          </div>-->
-<!--          <h4>การตัด Stock</h4>-->
-<!--          <ul>-->
-<!--            <li>ระบบจะตัด Stock อัตโนมัติจากส่วนประกอบของสินค้า</li>-->
-<!--            <li>ต้องมี Product ที่ตรงกับ SKU ในระบบ</li>-->
-<!--            <li>สามารถตัด Stock ทีหลังได้จากหน้ารายการออเดอร์</li>-->
-<!--          </ul>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--  </div>-->
-<!--</div>-->
 <div class="upload-container">
   <div class="upload-header">
     <div class="back-button" (click)="goBack()">
@@ -305,15 +5,16 @@
     </div>
     <h1>อัพโหลดออเดอร์</h1>
     <p class="subtitle">
-      🤖 รองรับการวิเคราะห์ด้วย Gemini AI - แม่นยำและรวดเร็วกว่าเดิม
+      🤖 รองรับการวิเคราะห์ด้วย Gemini AI และ Excel Parser
     </p>
   </div>
 
   <div class="upload-content">
-    <!-- Upload Type Selection -->
+    <!-- ⭐ Upload Type Selection -->
     <div class="upload-type-section">
       <h3>เลือกประเภทไฟล์</h3>
       <div class="type-options">
+        <!-- 24Shop -->
         <div class="type-option"
              [class.active]="uploadType === '24shop'"
              (click)="uploadType = '24shop'; removeFile()">
@@ -325,6 +26,19 @@
           </div>
         </div>
 
+        <!-- ⭐ TikTok - Gemini AI -->
+        <div class="type-option"
+             [class.active]="uploadType === 'tiktok'"
+             (click)="uploadType = 'tiktok'; removeFile()">
+          <i class="bi-file-earmark-excel"></i>
+          <div class="type-info">
+            <h4>TikTok</h4>
+            <p>อัพโหลดไฟล์ Excel จาก TikTok Shop</p>
+            <span class="ai-badge">🤖 Gemini AI</span>
+          </div>
+        </div>
+
+        <!-- Shopee -->
         <div class="type-option"
              [class.active]="uploadType === 'shopee'"
              (click)="uploadType = 'shopee'; removeFile()">
@@ -338,7 +52,7 @@
       </div>
     </div>
 
-    <!-- ⭐ Gemini AI Status Banner -->
+    <!-- Gemini AI Status Banner -->
     <div class="gemini-status-banner" *ngIf="isGeminiProcessing || parsingMethod === 'gemini'">
       <div class="gemini-icon">
         <i class="bi-stars" [class.spinning]="isGeminiProcessing"></i>
@@ -356,12 +70,16 @@
       </div>
     </div>
 
-    <!-- ข้อมูลออเดอร์ (เฉพาะ 24Shop) -->
-    <div class="order-info-section" *ngIf="uploadType === '24shop'">
-      <h3>ข้อมูลออเดอร์</h3>
+    <!-- ⭐ ข้อมูลออเดอร์ + เลือกลูกค้า (สำหรับ 24Shop และ TikTok) -->
+    <div class="order-info-section" *ngIf="uploadType === '24shop' || uploadType === 'tiktok'">
+      <h3>
+        <span *ngIf="uploadType === '24shop'">ข้อมูลออเดอร์ 24Shop</span>
+        <span *ngIf="uploadType === 'tiktok'">ข้อมูลออเดอร์ TikTok</span>
+      </h3>
 
-      <div class="order-form-grid">
-        <div class="form-group">
+      <div class="order-form-grid" [class.single-column]="uploadType === 'tiktok'">
+        <!-- เลขออเดอร์ - เฉพาะ 24Shop -->
+        <div class="form-group" *ngIf="uploadType === '24shop'">
           <label class="required">เลขที่ออเดอร์ (PO Number)</label>
           <input
             type="text"
@@ -372,6 +90,7 @@
           <small class="form-hint">ระบุเลขที่ PO จากเอกสาร</small>
         </div>
 
+        <!-- เลือกลูกค้า - สำหรับทั้ง 24Shop และ TikTok -->
         <div class="form-group" style="position: relative;">
           <label class="required">เลือกลูกค้า</label>
           <input
@@ -385,6 +104,9 @@
             required>
           <small class="form-hint" *ngIf="selectedCustomerId">
             ✓ เลือกลูกค้าแล้ว
+          </small>
+          <small class="form-hint hint-info" *ngIf="uploadType === 'tiktok' && !selectedCustomerId">
+            ⓘ กรุณาเลือกลูกค้าก่อนอัพโหลด (TikTok Excel ไม่มีข้อมูลลูกค้า)
           </small>
 
           <div class="customer-dropdown" *ngIf="showCustomerDropdown && filteredCustomers.length > 0">
@@ -410,19 +132,23 @@
            (dragover)="onDragOver($event)"
            (drop)="onDrop($event)"
            [class.has-file]="selectedFile"
-           [class.gemini-active]="uploadType === '24shop'">
+           [class.gemini-active]="uploadType === '24shop' || uploadType === 'tiktok'"
+           [class.tiktok-active]="uploadType === 'tiktok'">
 
         <div class="upload-placeholder" *ngIf="!selectedFile">
           <div class="upload-icon">
             <i class="bi-cloud-upload"></i>
-            <i class="bi-stars gemini-star" *ngIf="uploadType === '24shop'"></i>
+            <i class="bi-stars gemini-star" *ngIf="uploadType === '24shop' || uploadType === 'tiktok'"></i>
           </div>
           <h3>ลากไฟล์มาวางที่นี่</h3>
           <p *ngIf="uploadType === '24shop'">
-            🤖 ระบบจะใช้ Gemini AI วิเคราะห์ไฟล์อัตโนมัติ
+            🤖 ระบบจะใช้ Gemini AI วิเคราะห์ PDF อัตโนมัติ
+          </p>
+          <p *ngIf="uploadType === 'tiktok'">
+            🤖 ระบบจะใช้ Gemini AI วิเคราะห์ Excel อัตโนมัติ
           </p>
           <p *ngIf="uploadType === 'shopee'">
-            หรือคลิกเพื่อเลือกไฟล์ Excel
+            📊 ระบบจะอ่าน Excel จาก Shopee Seller Center
           </p>
           <input type="file"
                  #fileInput
@@ -433,7 +159,9 @@
             เลือกไฟล์
           </button>
           <small class="file-hint">
-            รองรับไฟล์: {{uploadType === '24shop' ? 'PDF' : 'Excel (XLSX, XLS)'}}
+            <span *ngIf="uploadType === '24shop'">รองรับไฟล์: PDF</span>
+            <span *ngIf="uploadType === 'tiktok'">รองรับไฟล์: Excel (XLSX)</span>
+            <span *ngIf="uploadType === 'shopee'">รองรับไฟล์: Excel (XLSX, XLS)</span>
           </small>
         </div>
 
@@ -442,7 +170,7 @@
           <div class="file-details">
             <h4>{{selectedFile.name}}</h4>
             <p>{{formatFileSize(selectedFile.size)}}</p>
-            <span class="file-meta" *ngIf="uploadType === '24shop'">
+            <span class="file-meta" *ngIf="uploadType === '24shop' || uploadType === 'tiktok'">
               🤖 จะวิเคราะห์ด้วย Gemini AI
             </span>
           </div>
@@ -452,24 +180,13 @@
         </div>
       </div>
 
-      <!-- Options -->
-      <div class="upload-options" *ngIf="selectedFile">
-        <label class="checkbox-label">
-          <input type="checkbox" [(ngModel)]="autoDeductStock">
-          <div class="checkbox-info">
-            <span>ตัด Stock อัตโนมัติหลังอัพโหลด</span>
-            <small>ระบบจะตัด Stock ตามจำนวนสินค้าในออเดอร์ทันที</small>
-          </div>
-        </label>
-      </div>
-
       <!-- Action Buttons -->
       <div class="upload-actions" *ngIf="selectedFile">
         <button class="preview-btn"
                 (click)="previewFile()"
                 [disabled]="uploading">
           <i class="bi-eye"></i>
-          <span *ngIf="uploadType === '24shop'">🤖 ดูตัวอย่าง (Gemini)</span>
+          <span *ngIf="uploadType === '24shop' || uploadType === 'tiktok'">🤖 ดูตัวอย่าง (Gemini)</span>
           <span *ngIf="uploadType === 'shopee'">ดูตัวอย่าง</span>
         </button>
 
@@ -483,7 +200,67 @@
       </div>
     </div>
 
-    <!-- Preview Section สำหรับ 24Shop -->
+<!--    &lt;!&ndash; ⭐ Preview Section สำหรับ TikTok & Shopee (Orders Format) &ndash;&gt;-->
+<!--    <div class="preview-section" *ngIf="previewOrders.length > 0">-->
+<!--      <h3>-->
+<!--        <i class="bi-stars" *ngIf="uploadType === 'tiktok'"></i>-->
+<!--        ตัวอย่างออเดอร์ ({{previewOrders.length}} ออเดอร์)-->
+<!--      </h3>-->
+<!--      <div class="preview-cards">-->
+<!--        <div class="preview-card" *ngFor="let order of previewOrders; let i = index">-->
+<!--          <div class="preview-header">-->
+<!--            <div class="order-number-section">-->
+<!--              <span class="order-index">#{{i + 1}}</span>-->
+<!--              <h4>{{order.orderNumber}}</h4>-->
+<!--            </div>-->
+<!--            <span class="preview-source tiktok" *ngIf="order.source === 'TIKTOK'">-->
+<!--              <i class="bi-tiktok"></i> TikTok-->
+<!--            </span>-->
+<!--            <span class="preview-source shopee" *ngIf="order.source === 'SHOPEE'">-->
+<!--              <i class="bi-cart"></i> Shopee-->
+<!--            </span>-->
+<!--          </div>-->
+
+<!--          <div class="preview-body">-->
+<!--            <div class="preview-row">-->
+<!--              <span class="label">ลูกค้า:</span>-->
+<!--              <span class="value">{{order.customerName}}</span>-->
+<!--            </div>-->
+<!--            <div class="preview-row" *ngIf="order.orderDate">-->
+<!--              <span class="label">วันที่สั่ง:</span>-->
+<!--              <span class="value">{{order.orderDate}}</span>-->
+<!--            </div>-->
+<!--            <div class="preview-row" *ngIf="order.deliveryDate">-->
+<!--              <span class="label">วันที่ของถึง:</span>-->
+<!--              <span class="value">{{order.deliveryDate}}</span>-->
+<!--            </div>-->
+<!--            <div class="preview-row">-->
+<!--              <span class="label">ราคารวม:</span>-->
+<!--              <span class="value">{{formatCurrency(order.totalAmount)}}</span>-->
+<!--            </div>-->
+<!--            <div class="preview-row" *ngIf="order.discount > 0">-->
+<!--              <span class="label">ค่าธรรมเนียม/ส่วนลด:</span>-->
+<!--              <span class="value text-danger">{{formatCurrency(order.discount)}}</span>-->
+<!--            </div>-->
+<!--            <div class="preview-row highlight">-->
+<!--              <span class="label">ยอดสุทธิ:</span>-->
+<!--              <span class="value price">{{formatCurrency(order.netAmount)}}</span>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="preview-items" *ngIf="order.items && order.items.length > 0">-->
+<!--            <h5>รายการสินค้า ({{order.items.length}} รายการ)</h5>-->
+<!--            <div class="preview-item" *ngFor="let item of order.items">-->
+<!--              <span class="item-sku">{{item.productSku}}</span>-->
+<!--              <span class="item-name">{{item.productName}}</span>-->
+<!--              <span class="item-qty">x {{item.quantity}}</span>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+
+    <!-- Preview Section สำหรับ 24Shop (Items Format) -->
     <div class="preview-section gemini-preview" *ngIf="previewItems.length > 0 && uploadType === '24shop'">
       <div class="preview-header">
         <h3>
@@ -546,47 +323,112 @@
       </div>
     </div>
 
-    <!-- Preview Section สำหรับ Shopee -->
-    <div class="preview-section" *ngIf="previewOrders.length > 0 && uploadType === 'shopee'">
-      <h3>ตัวอย่างออเดอร์</h3>
-      <div class="preview-cards">
-        <div class="preview-card" *ngFor="let order of previewOrders">
-          <div class="preview-header">
-            <h4>{{order.orderNumber}}</h4>
-            <span class="preview-source">{{order.source === 'SHOP_24' ? '24Shop' : 'Shopee'}}</span>
-          </div>
+    <!-- ⭐ Preview Section สำหรับ TikTok (แสดงหลาย Orders) -->
+    <div class="preview-section tiktok-orders-preview" *ngIf="previewOrders.length > 0 && uploadType === 'tiktok'">
+      <div class="preview-header">
+        <h3>
+          <i class="bi-stars"></i>
+          <i class="bi-music-note-beamed tiktok-icon"></i>  <!-- ⭐ เพิ่ม TikTok icon -->
+          ตัวอย่าง TikTok Orders ({{previewOrders.length}} PO)
+        </h3>
+        <span class="preview-badge gemini tiktok">
+      🤖 Gemini AI
+    </span>
+      </div>
 
-          <div class="preview-body">
-            <div class="preview-row">
-              <span class="label">ลูกค้า:</span>
-              <span class="value">{{order.customerName}}</span>
-            </div>
-            <div class="preview-row" *ngIf="order.customerPhone">
-              <span class="label">เบอร์โทร:</span>
-              <span class="value">{{order.customerPhone}}</span>
-            </div>
-            <div class="preview-row" *ngIf="order.shippingAddress">
-              <span class="label">ที่อยู่:</span>
-              <span class="value">{{order.shippingAddress}}</span>
-            </div>
-            <div class="preview-row">
-              <span class="label">ยอดรวม:</span>
-              <span class="value price">{{formatCurrency(order.netAmount)}}</span>
-            </div>
-          </div>
+      <!-- Orders Summary Cards -->
+<!--      <div class="orders-summary">-->
+<!--        <div class="summary-card" *ngFor="let order of previewOrders; let i = index">-->
+<!--          <div class="card-header">-->
+<!--            <span class="order-badge">PO {{i + 1}}</span>-->
+<!--            <strong>{{order.orderNumber}}</strong>-->
+<!--          </div>-->
+<!--          <div class="card-body">-->
+<!--            <div class="info-row">-->
+<!--              <span class="label">วันที่:</span>-->
+<!--              <span class="value">{{order.orderDate || 'N/A'}}</span>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <span class="label">ยอดรวม:</span>-->
+<!--              <span class="value">{{formatCurrency(order.totalAmount)}}</span>-->
+<!--            </div>-->
+<!--            <div class="info-row highlight">-->
+<!--              <span class="label">ส่วนลด:</span>-->
+<!--              <span class="value discount">-{{formatCurrency(order.discount)}}</span>-->
+<!--            </div>-->
+<!--            <div class="info-row total">-->
+<!--              <span class="label">ยอดสุทธิ:</span>-->
+<!--              <span class="value">{{formatCurrency(order.netAmount)}}</span>-->
+<!--            </div>-->
+<!--            <div class="info-row">-->
+<!--              <span class="label">รายการ:</span>-->
+<!--              <span class="value">{{order.itemsCount}} ชิ้น</span>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
 
-          <div class="preview-items" *ngIf="order.orderItems && order.orderItems.length > 0">
-            <h5>รายการสินค้า ({{order.orderItems.length}} รายการ)</h5>
-            <div class="preview-item" *ngFor="let item of order.orderItems">
-              <span class="item-name">{{item.productName}}</span>
-              <span class="item-qty">x {{item.quantity}}</span>
-              <span class="item-price">{{formatCurrency(item.totalPrice)}}</span>
-            </div>
-          </div>
-        </div>
+      <!-- Combined Items Table -->
+      <div class="preview-table">
+        <h4>รายการสินค้าทั้งหมด ({{getTotalItemsCount()}} รายการ)</h4>
+        <table>
+          <thead>
+          <tr>
+            <th>PO</th>
+            <th>SKU</th>
+            <th>ชื่อสินค้า</th>
+            <th class="text-center">จำนวน</th>
+            <th class="text-right">ราคา/หน่วย</th>
+            <th class="text-right">รวม</th>
+            <th class="text-right">ส่วนลด</th>
+            <th class="text-right">ยอดสุทธิ</th>
+            <th class="text-center">สถานะ</th>
+          </tr>
+          </thead>
+          <tbody>
+          <ng-container *ngFor="let order of previewOrders; let orderIndex = index">
+            <tr *ngFor="let item of order.items; let itemIndex = index"
+                [class.not-found]="item.found === false">
+              <td>
+                <span class="sku-badge tiktok"> {{order.orderNumber}}</span>
+              </td>
+              <td>
+            <span class="sku-badge tiktok" [class.warning]="item.found === false">
+              {{item.productSku}}
+            </span>
+              </td>
+              <td>{{item.productName}}</td>
+              <td class="text-center">
+                <span class="quantity-badge">{{item.quantity}}</span>
+              </td>
+              <td class="text-right">{{formatCurrency(item.unitPrice)}}</td>
+              <td class="text-right">{{formatCurrency(item.totalPrice)}}</td>
+              <td class="text-right">{{formatCurrency(order.discount)}}</td>
+              <td class="text-right">{{formatCurrency(order.netAmount)}}</td>
+              <td class="text-center">
+            <span class="status-badge"
+                  [class.success]="item.found !== false"
+                  [class.warning]="item.found === false">
+              <i class="bi-check-circle" *ngIf="item.found !== false"></i>
+              <i class="bi-exclamation-triangle" *ngIf="item.found === false"></i>
+              {{item.found !== false ? 'พบ' : 'ไม่พบ'}}
+            </span>
+              </td>
+            </tr>
+          </ng-container>
+          </tbody>
+          <tfoot>
+          <tr class="total-row">
+            <td colspan="5" class="text-right"><strong>ยอดรวมทั้งหมด:</strong></td>
+            <td class="text-right">
+              <strong class="total-amount">{{formatCurrency(getGrandTotal())}}</strong>
+            </td>
+            <td></td>
+          </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
-
     <!-- Upload Result -->
     <div class="result-section" *ngIf="uploadResult && !uploading">
       <div class="result-card" [class.success]="uploadResult.success" [class.error]="!uploadResult.success">
@@ -598,7 +440,7 @@
           <h3>{{uploadResult.success ? 'อัพโหลดสำเร็จ' : 'อัพโหลดไม่สำเร็จ'}}</h3>
           <p>{{uploadResult.message}}</p>
 
-          <!-- ⭐ แสดงข้อมูล Gemini -->
+          <!-- Gemini Result Info -->
           <div class="gemini-result-info" *ngIf="uploadResult.success && uploadResult.parsedWith === 'Gemini AI'">
             <div class="gemini-badge-large">
               <i class="bi-stars"></i>
@@ -609,22 +451,7 @@
             </p>
           </div>
 
-          <div class="result-stats" *ngIf="uploadResult.success && uploadType === 'shopee'">
-            <div class="stat-item">
-              <span class="stat-label">ทั้งหมด:</span>
-              <span class="stat-value">{{uploadResult.totalOrders}}</span>
-            </div>
-            <div class="stat-item success">
-              <span class="stat-label">สำเร็จ:</span>
-              <span class="stat-value">{{uploadResult.successCount}}</span>
-            </div>
-            <div class="stat-item error" *ngIf="uploadResult.errorCount > 0">
-              <span class="stat-label">ล้มเหลว:</span>
-              <span class="stat-value">{{uploadResult.errorCount}}</span>
-            </div>
-          </div>
-
-          <!-- Stock Deduction Messages -->
+          <!-- Stock Messages -->
           <div class="stock-messages" *ngIf="uploadMessages.length > 0">
             <h4>การตัด Stock:</h4>
             <ul>
@@ -639,56 +466,111 @@
       </div>
     </div>
 
-    <!-- Instructions -->
+    <!-- ⭐ อัพเดทคำแนะนำทุกช่องทาง -->
     <div class="instructions-section">
       <h3>คำแนะนำ</h3>
       <div class="instruction-cards">
+        <!-- Gemini AI Card -->
         <div class="instruction-card gemini-card">
           <div class="instruction-icon gemini">
             <i class="bi-stars"></i>
           </div>
           <h4>🤖 Gemini AI</h4>
           <ul>
-            <li>ใช้ AI ขั้นสูงจาก Google วิเคราะห์ PDF</li>
+            <li>ใช้ AI ขั้นสูงจาก Google วิเคราะห์ PDF/Excel</li>
+            <li>รองรับ 24Shop PDF และ TikTok Excel อัตโนมัติ</li>
             <li>ความแม่นยำสูงกว่าวิธีการแบบเดิม 95%</li>
-            <li>รองรับ PDF ที่มี layout ซับซ้อน</li>
-            <li>ประมวลผลเร็วและแม่นยำยิ่งขึ้น</li>
+            <li><strong>⚠️ ไม่ตัด Stock อัตโนมัติ</strong></li>
+            <li class="warning-item">
+              <i class="bi-hand-index"></i>
+              ต้องเช็คและตัด Stock ด้วยตัวเอง
+            </li>
           </ul>
         </div>
 
+        <!-- 24Shop Card -->
         <div class="instruction-card">
           <div class="instruction-icon">
             <i class="bi-file-earmark-pdf"></i>
           </div>
           <h4>24Shop (PDF)</h4>
           <ul>
-            <li>ใช้ไฟล์ PDF จาก Purchase Order ของ 24Shopping</li>
+            <li>Export PDF จาก 24Shopping Purchase Order</li>
             <li>ระบุเลข PO และเลือกลูกค้าก่อนอัพโหลด</li>
-            <li>ระบบจะอ่านข้อมูลสินค้าโดยอัตโนมัติด้วย Gemini</li>
+            <li>Gemini AI จะอ่านข้อมูลสินค้าอัตโนมัติ</li>
+            <li><strong>⚠️ สถานะเริ่มต้น:</strong></li>
+            <li class="warning-item">
+              <i class="bi-exclamation-triangle"></i>
+              Order Status: "รอดำเนินการ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-cash-coin"></i>
+              Payment Status: "ยังไม่ชำระ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-box-seam"></i>
+              Stock Status: "รอตัด Stock"
+            </li>
+            <li><strong>📝 ต้องจัดการด้วยตัวเอง:</strong></li>
+            <li>1. เช็คและตัด Stock</li>
+            <li>2. เปลี่ยนสถานะชำระเงิน</li>
+            <li>3. อัพเดทสถานะ Order</li>
           </ul>
         </div>
 
+        <!-- TikTok Card -->
+        <div class="instruction-card tiktok-card">
+          <div class="instruction-icon tiktok">
+            <i class="bi-stars"></i>
+          </div>
+          <h4>🤖 TikTok + Gemini AI</h4>
+          <ul>
+            <li>Export Excel จาก TikTok Shop Seller Center</li>
+            <li><strong>Gemini AI จะวิเคราะห์ Excel อัตโนมัติ</strong></li>
+            <li><strong>⭐ ต้องเลือกลูกค้าก่อนอัพโหลด</strong></li>
+            <li>รองรับ Order ID, วันที่, ราคา, Shopping center items</li>
+            <li><strong>⚠️ สถานะเริ่มต้น:</strong></li>
+            <li class="warning-item">
+              <i class="bi-exclamation-triangle"></i>
+              Order Status: "รอดำเนินการ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-cash-coin"></i>
+              Payment Status: "ยังไม่ชำระ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-box-seam"></i>
+              Stock Status: "รอตัด Stock"
+            </li>
+            <li><strong>📝 เหมือน 24Shop:</strong> ทำงานแบบ Manual ทุกขั้นตอน</li>
+          </ul>
+        </div>
+
+        <!-- Shopee Card -->
         <div class="instruction-card">
           <div class="instruction-icon">
             <i class="bi-file-earmark-excel"></i>
           </div>
           <h4>Shopee (Excel)</h4>
           <ul>
-            <li>ใช้ไฟล์ Excel ที่ Export จาก Shopee Seller Center</li>
-            <li>ควรมี Column: Order Number, Customer Name, Product, Quantity, Price</li>
+            <li>Export Excel จาก Shopee Seller Center</li>
+            <li>ควรมี Column: Order Number, Customer, Product, Qty, Price</li>
             <li>รองรับไฟล์ .xlsx และ .xls</li>
-          </ul>
-        </div>
-
-        <div class="instruction-card">
-          <div class="instruction-icon">
-            <i class="bi-box-seam"></i>
-          </div>
-          <h4>การตัด Stock</h4>
-          <ul>
-            <li>ระบบจะตัด Stock อัตโนมัติจากส่วนประกอบของสินค้า</li>
-            <li>ต้องมี Product ที่ตรงกับ SKU ในระบบ</li>
-            <li>สามารถตัด Stock ทีหลังได้จากหน้ารายการออเดอร์</li>
+            <li>ข้อมูลลูกค้ามาจากไฟล์</li>
+            <li><strong>⚠️ สถานะเริ่มต้น:</strong></li>
+            <li class="warning-item">
+              <i class="bi-exclamation-triangle"></i>
+              Order Status: "รอดำเนินการ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-cash-coin"></i>
+              Payment Status: "ยังไม่ชำระ"
+            </li>
+            <li class="warning-item">
+              <i class="bi-box-seam"></i>
+              Stock Status: "รอตัด Stock"
+            </li>
+            <li><strong>📝 ต้องจัดการด้วยตัวเอง:</strong> เช็คและตัด Stock</li>
           </ul>
         </div>
       </div>

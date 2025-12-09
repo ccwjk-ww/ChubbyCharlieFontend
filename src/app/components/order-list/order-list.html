@@ -121,9 +121,13 @@
           </td>
           <td class="col-source">
             <span [class]="getSourceClass(order.source)">
+              <i class="bi-music-note-beamed" *ngIf="order.source === 'TIKTOK'"></i>
+              <i class="bi-file-earmark-pdf" *ngIf="order.source === 'SHOP_24'"></i>
+              <i class="bi-cart" *ngIf="order.source === 'SHOPEE'"></i>
               {{order.source === 'SHOP_24' ? '24Shop' :
               order.source === 'SHOPEE' ? 'Shopee' :
-                'Manual'}}
+                order.source === 'TIKTOK' ? 'TikTok' :
+                  'Manual'}}
             </span>
           </td>
           <td class="col-customer">

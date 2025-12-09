@@ -513,3 +513,35 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* ⭐ TikTok Badge - ใช้สีของ TikTok */
+.badge.badge-tiktok {
+  background: linear-gradient(135deg, #000000 0%, #00f2ea 50%, #ff0050 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 0, 80, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.badge.badge-tiktok i {
+  animation: tiktok-pulse 2s infinite;
+}
+
+@keyframes tiktok-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* ⭐ ปรับ badge อื่นๆ ให้มี gap สำหรับ icon */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

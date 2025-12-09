@@ -13,5 +13,6 @@ bootstrapApplication(App, {
     provideRouter(routes),
     provideHttpClient(),
     importProvidersFrom(ReactiveFormsModule, FormsModule), provideCharts(withDefaultRegisterables())
+
   ]
 }).catch(err => console.error(err));

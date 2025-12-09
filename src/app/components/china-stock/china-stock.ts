@@ -14,7 +14,6 @@ import {ThaiStock} from '../../services/thai-stock.service';
   styleUrls: ['./china-stock.css']
 })
 export class ChinaStockComponent implements OnInit {
-  // ⭐ เก็บ stocks ต้นฉบับแยกจาก filtered
   allChinaStocks: ChinaStock[] = [];
   filteredChinaStocks: ChinaStock[] = [];
   paginatedChinaStocks: ChinaStock[] = [];
@@ -30,7 +29,7 @@ export class ChinaStockComponent implements OnInit {
   activeChinaStock: ChinaStock | null = null;
 
   constructor(
-    private chinaStockService: ChinaStockService,
+    public chinaStockService: ChinaStockService, // ⭐ เปลี่ยนเป็น public
     private stockLotService: StockLotService,
     private router: Router
   ) {}
@@ -57,7 +56,6 @@ export class ChinaStockComponent implements OnInit {
     this.loading = true;
     this.chinaStockService.getAllChinaStocks().subscribe({
       next: (stocks) => {
-        // ⭐ เก็บข้อมูลต้นฉบับ
         this.allChinaStocks = stocks;
         this.applyFilters();
         this.loading = false;
@@ -89,23 +87,16 @@ export class ChinaStockComponent implements OnInit {
     this.applyFilters();
   }
 
-  /**
-   * ⭐ แก้ไข applyFilters() ให้ Filter ถูกต้อง
-   */
   applyFilters(): void {
-    // เริ่มจาก stocks ต้นฉบับ
     let filtered = [...this.allChinaStocks];
 
-    // ⭐ Filter by Status
     if (this.selectedStatus !== 'ALL') {
       filtered = filtered.filter(stock => stock.status === this.selectedStatus);
     }
 
-    // ⭐ Filter by Lot (แก้ไขให้ถูกต้อง)
     if (this.selectedLot !== 'ALL') {
       const selectedLotId = Number(this.selectedLot);
       filtered = filtered.filter(stock => {
-        // รองรับทั้ง stockLotId และ stockLot.stockLotId
         const stockLotId = stock.stockLotId || stock.stockLot?.stockLotId;
         return stockLotId === selectedLotId;
       });
@@ -209,22 +200,23 @@ export class ChinaStockComponent implements OnInit {
     this.activeChinaStock = null;
   }
 
+  // ⭐ ปรับให้แสดง 2 ทศนิยม
   formatCurrency(amount: number | undefined, currency: string = 'THB'): string {
-    if (!amount) return currency === 'THB' ? '฿0.000' : '¥0.000';
+    if (!amount) return currency === 'THB' ? '฿0.00' : '¥0.00';
 
     if (currency === 'THB') {
       return new Intl.NumberFormat('th-TH', {
         style: 'currency',
         currency: 'THB',
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       }).format(amount);
     } else {
       return new Intl.NumberFormat('zh-CN', {
         style: 'currency',
         currency: 'CNY',
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       }).format(amount);
     }
   }

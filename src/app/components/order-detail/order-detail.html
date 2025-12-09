@@ -20,6 +20,12 @@
           <span [class]="getPaymentStatusClass(order.paymentStatus)">
             {{order.paymentStatus}}
           </span>
+          <!-- ⭐ NEW: Badge สถานะการตัด Stock -->
+          <span [class]="getStockDeductionBadgeClass()"
+                *ngIf="stockDeductionStatus"
+                [title]="getStockDeductionBadgeText()">
+            {{getStockDeductionBadgeText()}}
+          </span>
         </div>
       </div>
 
@@ -27,7 +33,17 @@
         <div class="info-grid">
           <div class="info-item">
             <span class="label">แหล่งที่มา:</span>
-            <span class="value">{{order.source}}</span>
+            <span class="value">
+              <span [class]="'badge ' + getSourceClass(order.source)">
+                <i class="bi-music-note-beamed" *ngIf="order.source === 'TIKTOK'"></i>
+                <i class="bi-file-earmark-pdf" *ngIf="order.source === 'SHOP_24'"></i>
+                <i class="bi-cart" *ngIf="order.source === 'SHOPEE'"></i>
+                {{order.source === 'SHOP_24' ? '24Shop' :
+                order.source === 'SHOPEE' ? 'Shopee' :
+                  order.source === 'TIKTOK' ? 'TikTok' :
+                    'Manual'}}
+              </span>
+            </span>
           </div>
           <div class="info-item">
             <span class="label">วันที่สั่ง:</span>
@@ -85,7 +101,7 @@
             <th class="text-center">จำนวน</th>
             <th class="text-right">ราคา/หน่วย</th>
             <th class="text-right">รวม</th>
-            <th class="text-center">Stock</th>
+            <th class="text-center">Stock Status</th>
           </tr>
           </thead>
           <tbody>
@@ -135,40 +151,93 @@
       </div>
     </div>
 
-    <!-- Actions Card -->
+    <!-- ⭐ Actions Card - ปรับปรุงปุ่มให้รองรับ Restore Stock -->
     <div class="actions-card">
       <h3>การดำเนินการ</h3>
 
       <div class="actions-grid">
+        <!-- ⭐ ปุ่มแก้ไขออเดอร์ -->
         <button class="action-btn primary" (click)="editOrder()">
           <i class="bi-pencil"></i>
           แก้ไขออเดอร์
         </button>
 
-        <button class="action-btn success" (click)="checkStock()">
+        <!-- ⭐ ปุ่ม เช็ค & ตัด Stock - Disable เมื่อตัดครบแล้ว -->
+        <button
+          class="action-btn success"
+          (click)="checkStock()"
+          [disabled]="isAllStockDeducted()"
+          [title]="isAllStockDeducted() ?
+                   '⚠️ ตัด Stock ครบแล้ว - หากต้องการตัดใหม่ กรุณาคืน Stock ก่อน' :
+                   'เช็ค Stock และตัดทันที'">
           <i class="bi-box-seam"></i>
-          เช็ค Stock
+          เช็ค & ตัด Stock
+          <span class="status-indicator" *ngIf="isAllStockDeducted()">✅</span>
         </button>
 
-        <button class="action-btn warning" (click)="deductStock()">
-          <i class="bi-bag-x"></i>
-          ตัด Stock
+        <!-- ⭐ NEW: ปุ่ม คืน Stock - แสดงเฉพาะเมื่อมีรายการที่ตัดแล้ว -->
+        <button
+          class="action-btn warning"
+          (click)="restoreStock()"
+          [disabled]="!canRestoreStock()"
+          [title]="!canRestoreStock() ?
+                   'ไม่มีรายการที่ตัด Stock แล้ว' :
+                   'คืน Stock ที่ตัดไปแล้ว'"
+          *ngIf="canRestoreStock()">
+          <i class="bi-arrow-counterclockwise"></i>
+          คืน Stock
         </button>
 
-        <button class="action-btn info" (click)="updateStatus('CONFIRMED')">
+        <!-- ⭐ ปุ่มยืนยันออเดอร์ -->
+        <button
+          class="action-btn info"
+          (click)="updateStatus('CONFIRMED')"
+          [disabled]="order.status === 'CONFIRMED' || order.status === 'CANCELLED'">
           <i class="bi-check-circle"></i>
           ยืนยันออเดอร์
         </button>
 
-        <button class="action-btn info" (click)="updatePaymentStatus('PAID')">
+        <!-- ⭐ ปุ่มชำระเงินแล้ว -->
+        <button
+          class="action-btn info"
+          (click)="updatePaymentStatus('PAID')"
+          [disabled]="order.paymentStatus === 'PAID'">
           <i class="bi-cash"></i>
           ชำระเงินแล้ว
+          <span class="status-indicator" *ngIf="order.paymentStatus === 'PAID'">✅</span>
         </button>
 
-        <button class="action-btn danger" (click)="cancelOrder()">
+        <!-- ⭐ ปุ่มยกเลิกออเดอร์ -->
+        <button
+          class="action-btn danger"
+          (click)="cancelOrder()"
+          [disabled]="order.status === 'CANCELLED' || order.status === 'DELIVERED'">
           <i class="bi-x-circle"></i>
           ยกเลิกออเดอร์
         </button>
+      </div>
+
+      <!-- ⭐ NEW: Stock Status Info Panel -->
+      <div class="stock-status-panel" *ngIf="stockDeductionStatus && stockDeductionStatus.totalItems > 0">
+        <h4>📊 สถานะการตัด Stock</h4>
+        <div class="status-details">
+          <div class="status-item">
+            <span class="status-label">รายการทั้งหมด:</span>
+            <span class="status-value">{{stockDeductionStatus.totalItems}}</span>
+          </div>
+          <div class="status-item success" *ngIf="stockDeductionStatus.completedCount > 0">
+            <span class="status-label">✅ ตัดสำเร็จ:</span>
+            <span class="status-value">{{stockDeductionStatus.completedCount}}</span>
+          </div>
+          <div class="status-item warning" *ngIf="stockDeductionStatus.pendingCount > 0">
+            <span class="status-label">⏸️ รอตัด:</span>
+            <span class="status-value">{{stockDeductionStatus.pendingCount}}</span>
+          </div>
+          <div class="status-item danger" *ngIf="stockDeductionStatus.failedCount > 0">
+            <span class="status-label">❌ ล้มเหลว:</span>
+            <span class="status-value">{{stockDeductionStatus.failedCount}}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -1,4 +1,3 @@
-<!-- ไฟล์นี้ไม่ต้องแก้ เพราะ Backend ส่งค่า Grand Total มาให้แล้ว -->
 <div class="china-stock-container">
   <div class="china-stock-header">
     <div class="china-stock-header-top">
@@ -63,7 +62,7 @@
           <th class="col-sn">S/N</th>
           <th class="col-name">Product Name</th>
           <th class="col-lot">Lot</th>
-          <th class="col-quantity">Qty</th>
+          <th class="col-quantity-detail">Quantity Details</th>
           <th class="col-unit-price">Unit Price (¥)</th>
           <th class="col-total-yuan">Total (¥)</th>
           <th class="col-exchange">Rate</th>
@@ -83,7 +82,56 @@
             </div>
           </td>
           <td class="col-lot">{{getLotName(stock)}}</td>
-          <td class="col-quantity">{{stock.quantity}}</td>
+
+          <!-- ⭐ Quantity Details - แก้ไข Safe Navigation -->
+          <td class="col-quantity-detail">
+            <div class="quantity-details-container">
+              <!-- Row 1: จำนวนคงเหลือ / ทั้งหมด -->
+              <div class="quantity-main">
+                <span class="qty-remaining"
+                      [ngClass]="stock.remainingPercentage != null ? chinaStockService.getRemainingColor(stock.remainingPercentage) : 'text-muted'">
+                  <i class="bi bi-box-seam"></i>
+                  <strong>{{stock.currentQuantity || stock.quantity || 0}}</strong>
+                </span>
+                <span class="qty-separator">/</span>
+                <span class="qty-total text-muted">
+                  {{stock.originalQuantity || stock.currentQuantity || stock.quantity || 0}}
+                </span>
+              </div>
+
+              <!-- Row 2: Labels + Progress Bar (แสดงเฉพาะเมื่อมีข้อมูล) -->
+              <div class="quantity-info-row" *ngIf="stock.remainingPercentage != null">
+                <div class="quantity-labels">
+                  <span class="label-item">
+                    <span class="label-badge badge-remaining" [ngClass]="{
+                      'badge-success': stock.remainingPercentage >= 70,
+                      'badge-warning': stock.remainingPercentage >= 30 && stock.remainingPercentage < 70,
+                      'badge-danger': stock.remainingPercentage < 30
+                    }">
+                      คงเหลือ: {{stock.remainingPercentage | number:'1.0-0'}}%
+                    </span>
+                  </span>
+                  <span class="label-item text-muted">
+                    <small>ใช้ไป: {{stock.usedQuantity || 0}}</small>
+                  </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="quantity-progress">
+                  <div
+                    class="quantity-progress-bar"
+                    [ngClass]="{
+                      'bg-success': stock.remainingPercentage >= 70,
+                      'bg-warning': stock.remainingPercentage >= 30 && stock.remainingPercentage < 70,
+                      'bg-danger': stock.remainingPercentage < 30
+                    }"
+                    [style.width.%]="stock.remainingPercentage">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+
           <td class="col-unit-price">{{formatCurrency(stock.unitPriceYuan, 'CNY')}}</td>
           <td class="col-total-yuan">{{formatCurrency(stock.totalYuan, 'CNY')}}</td>
           <td class="col-exchange">{{stock.exchangeRate}}</td>
