@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CustomerService, Customer } from '../../services/customer.service';
+import { CustomerService, Customer, CustomerStats } from '../../services/customer.service';
 
 @Component({
   selector: 'app-customer',
@@ -12,16 +12,21 @@ import { CustomerService, Customer } from '../../services/customer.service';
   styleUrls: ['./customer.css']
 })
 export class CustomerComponent implements OnInit {
-  customers: Customer[] = [];  // ✅ เพิ่มตัวแปรนี้
+  // ⭐ เพิ่ม customers array เพื่อเก็บข้อมูลทั้งหมด
+  customers: Customer[] = [];
   filteredCustomers: Customer[] = [];
   paginatedCustomers: Customer[] = [];
   searchTerm: string = '';
+  selectedStatus: 'ALL' | 'ACTIVE' | 'INACTIVE' = 'ALL';
   currentPage: number = 1;
   itemsPerPage: number = 10;
   totalPages: number = 1;
   loading: boolean = false;
   isDropdownOpen: boolean = false;
   activeCustomer: Customer | null = null;
+
+  // ⭐ Statistics
+  stats: CustomerStats = { total: 0, active: 0, inactive: 0 };
 
   constructor(
     private customerService: CustomerService,
@@ -30,20 +35,34 @@ export class CustomerComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCustomers();
+    this.loadStatistics();
   }
 
   get totalCustomers(): number {
     return this.filteredCustomers.length;
   }
 
+  // ⭐ Load statistics
+  loadStatistics(): void {
+    this.customerService.getStatistics().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (error) => {
+        console.error('Error loading statistics:', error);
+      }
+    });
+  }
+
   loadCustomers(): void {
     this.loading = true;
     this.customerService.getAllCustomers().subscribe({
       next: (customers) => {
-        this.customers = customers;  // ✅ เก็บข้อมูลทั้งหมด
-        this.filteredCustomers = customers;
-        this.calculatePagination();
-        this.updatePaginatedData();
+        this.customers = customers.map(cust => ({
+          ...cust,
+          status: cust.status || 'ACTIVE' // Default เป็น ACTIVE
+        }));
+        this.applyFilters();
         this.loading = false;
       },
       error: (error) => {
@@ -56,29 +75,37 @@ export class CustomerComponent implements OnInit {
 
   onSearch(): void {
     this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  // ⭐ Filter by status
+  onStatusFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  // ⭐ Apply all filters (เหมือน Staff)
+  applyFilters(): void {
+    let filtered = [...this.customers];
+
+    // Filter by search term
     if (this.searchTerm.trim()) {
-      this.customerService.searchCustomersByNameOrPhone(this.searchTerm).subscribe({
-        next: (customers) => {
-          this.filteredCustomers = customers;
-          this.calculatePagination();
-          this.updatePaginatedData();
-        },
-        error: (error) => {
-          console.error('Error searching customers:', error);
-          // ถ้า API ล้มเหลว ใช้ filter ใน frontend แทน
-          this.filteredCustomers = this.customers.filter(c =>
-            c.customerName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-            (c.customerPhone && c.customerPhone.includes(this.searchTerm))
-          );
-          this.calculatePagination();
-          this.updatePaginatedData();
-        }
-      });
-    } else {
-      this.filteredCustomers = this.customers;
-      this.calculatePagination();
-      this.updatePaginatedData();
+      const searchLower = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(customer =>
+        customer.customerName.toLowerCase().includes(searchLower) ||
+        (customer.customerPhone && customer.customerPhone.includes(searchLower)) ||
+        (customer.customerAddress && customer.customerAddress.toLowerCase().includes(searchLower))
+      );
     }
+
+    // Filter by status
+    if (this.selectedStatus !== 'ALL') {
+      filtered = filtered.filter(customer => customer.status === this.selectedStatus);
+    }
+
+    this.filteredCustomers = filtered;
+    this.calculatePagination();
+    this.updatePaginatedData();
   }
 
   calculatePagination(): void {
@@ -129,6 +156,7 @@ export class CustomerComponent implements OnInit {
         next: () => {
           alert('ลบลูกค้าสำเร็จ');
           this.loadCustomers();
+          this.loadStatistics();
           this.closeDropdown();
         },
         error: (error) => {
@@ -154,10 +182,33 @@ export class CustomerComponent implements OnInit {
     this.activeCustomer = null;
   }
 
-  // ✅ เพิ่ม method สำหรับปิด dropdown เมื่อคลิกที่อื่น
   onDocumentClick(): void {
     if (this.isDropdownOpen) {
       this.closeDropdown();
     }
   }
+
+  // ⭐ Get status badge class
+  getStatusClass(status: string | undefined): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'badge badge-green';
+      case 'INACTIVE':
+        return 'badge badge-red';
+      default:
+        return 'badge badge-gray';
+    }
+  }
+
+  // ⭐ Format date
+  formatDate(date: Date | undefined): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  protected readonly Math = Math;
 }

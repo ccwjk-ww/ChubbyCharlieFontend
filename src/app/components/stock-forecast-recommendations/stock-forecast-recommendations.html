@@ -1,430 +1,237 @@
-<div class="recommendations-container">
+<!-- ✅ IMPROVED: Stock Forecast Recommendations - เข้าใจง่าย ใช้งานสะดวก -->
+<div class="recommendations-page">
+
+  <!-- ============================================ -->
+  <!-- Header Section - เรียบง่าย ชัดเจน -->
+  <!-- ============================================ -->
   <div class="page-header">
+    <button class="back-btn" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      กลับ
+    </button>
+
     <div class="header-content">
-      <button class="back-btn" (click)="goBack()">
-        <i class="bi-arrow-left"></i>
-        Back
-      </button>
-      <div class="header-info">
-        <div class="header-icon">
-          <i class="bi-cart-check-fill"></i>
-        </div>
-        <div class="header-text">
-          <h1>Order Recommendations</h1>
-          <p class="header-subtitle">Smart reorder suggestions based on usage patterns</p>
-        </div>
+      <div class="header-icon">
+        <i class="bi bi-cart-check-fill"></i>
+      </div>
+      <div>
+        <h1>📋 คำแนะนำการสั่งซื้อ</h1>
+        <p>รายการสินค้าที่ต้องสั่งซื้อเพิ่ม</p>
       </div>
     </div>
-    <div class="header-actions">
-      <button class="action-btn secondary" (click)="refreshRecommendations()" [disabled]="loading">
-        <i class="bi-arrow-clockwise"></i>
-        Refresh
-      </button>
-      <button class="action-btn secondary" (click)="exportRecommendations()" [disabled]="loading || !recommendations">
-        <i class="bi-download"></i>
-        Export
-      </button>
-      <button class="action-btn secondary" (click)="printRecommendations()" [disabled]="loading || !recommendations">
-        <i class="bi-printer"></i>
-        Print
-      </button>
-    </div>
+
+    <button class="refresh-btn" (click)="refreshRecommendations()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise"></i>
+      รีเฟรช
+    </button>
   </div>
 
-  <div class="loading-container" *ngIf="loading">
-    <div class="loading-spinner"></div>
-    <p>Loading recommendations...</p>
+  <!-- ============================================ -->
+  <!-- Loading State -->
+  <!-- ============================================ -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>กำลังโหลดข้อมูล...</p>
   </div>
 
-  <div class="recommendations-content" *ngIf="!loading && recommendations">
-    <!-- Summary Cards -->
-    <div class="summary-section">
-      <div class="summary-card total">
-        <div class="card-icon">
-          <i class="bi-boxes"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-number">{{recommendations.totalItemsToOrder}}</div>
-          <div class="card-label">Total Items to Order</div>
+  <!-- ============================================ -->
+  <!-- Main Content -->
+  <!-- ============================================ -->
+  <div class="content" *ngIf="!loading && recommendations">
+
+    <!-- สรุปภาพรวม - ง่าย ๆ 4 Card -->
+    <div class="summary-cards">
+      <div class="card total">
+        <i class="bi bi-boxes"></i>
+        <div>
+          <div class="number">{{recommendations.totalItemsToOrder}}</div>
+          <div class="label">รายการทั้งหมด</div>
         </div>
       </div>
 
-      <div class="summary-card cost">
-        <div class="card-icon">
-          <i class="bi-cash-coin"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-number">{{formatCurrency(recommendations.totalOrderCost)}}</div>
-          <div class="card-label">Total Order Cost</div>
+      <div class="card urgent">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <div>
+          <div class="number">{{urgentCount}}</div>
+          <div class="label">เร่งด่วน</div>
         </div>
       </div>
 
-      <div class="summary-card priority" [ngClass]="getPriorityClass(recommendations.priorityLevel)">
-        <div class="card-icon">
-          <i class="bi-exclamation-triangle-fill"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-number">{{recommendations.priorityLevel}}</div>
-          <div class="card-label">Priority Level</div>
+      <div class="card quantity">
+        <i class="bi bi-box-seam"></i>
+        <div>
+          <div class="number">{{formatNumber(totalQuantity)}}</div>
+          <div class="label">จำนวนสั่งซื้อ (ชิ้น)</div>
         </div>
       </div>
 
-      <div class="summary-card urgent">
-        <div class="card-icon">
-          <i class="bi-alarm-fill"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-number">{{recommendations.urgentItems.length}}</div>
-          <div class="card-label">Urgent Orders</div>
+      <div class="card cost">
+        <i class="bi bi-cash-coin"></i>
+        <div>
+          <div class="number small">{{formatCurrency(totalCost)}}</div>
+          <div class="label">ต้นทุนรวม</div>
         </div>
       </div>
     </div>
 
-    <!-- Tabs Navigation -->
-    <div class="tabs-section">
-      <div class="tabs-nav">
-        <button class="tab-btn" [class.active]="selectedTab === 'urgent'" (click)="selectedTab = 'urgent'">
-          <i class="bi-exclamation-circle-fill"></i>
-          <span>Urgent Orders</span>
-          <span class="tab-badge">{{recommendations.urgentItems.length}}</span>
-        </button>
-        <button class="tab-btn" [class.active]="selectedTab === 'soon'" (click)="selectedTab = 'soon'">
-          <i class="bi-clock-fill"></i>
-          <span>Soon to Order</span>
-          <span class="tab-badge">{{recommendations.soonToOrderItems.length}}</span>
-        </button>
-        <button class="tab-btn" [class.active]="selectedTab === 'china'" (click)="selectedTab = 'china'">
-          <i class="bi-geo-alt-fill"></i>
-          <span>China Stock</span>
-          <span class="tab-badge">{{recommendations.chinaStockOrders.itemCount}}</span>
-        </button>
-        <button class="tab-btn" [class.active]="selectedTab === 'thai'" (click)="selectedTab = 'thai'">
-          <i class="bi-house-fill"></i>
-          <span>Thai Stock</span>
-          <span class="tab-badge">{{recommendations.thaiStockOrders.itemCount}}</span>
-        </button>
-      </div>
+    <!-- ============================================ -->
+    <!-- Tabs - เหลือแค่ที่จำเป็น -->
+    <!-- ============================================ -->
+    <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="selectedTab === 'all'"
+        (click)="selectedTab = 'all'">
+        <i class="bi bi-list-ul"></i>
+        ทั้งหมด
+        <span class="badge">{{allItems.length}}</span>
+      </button>
 
-      <!-- Urgent Orders Tab -->
-      <div class="tab-content" *ngIf="selectedTab === 'urgent'">
-        <div class="tab-header">
-          <h2>🚨 Urgent Orders Required</h2>
-          <p>These items need immediate attention and should be ordered as soon as possible</p>
-        </div>
+      <button
+        class="tab urgent-tab"
+        [class.active]="selectedTab === 'urgent'"
+        (click)="selectedTab = 'urgent'">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        เร่งด่วน
+        <span class="badge">{{urgentCount}}</span>
+      </button>
 
-        <div class="items-list">
-          <div class="recommendation-card" *ngFor="let item of recommendations.urgentItems"
-               [ngClass]="getUrgencyClass(item.urgencyLevel)">
-            <div class="card-header" (click)="toggleItemExpansion(item.forecastId)">
-              <div class="card-title-section">
-                <h3 class="item-name">{{item.stockItemName}}</h3>
-                <span class="stock-type-badge">{{item.stockType}}</span>
-                <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
-                  {{item.urgencyLevel}}
-                </span>
-              </div>
-              <div class="card-actions">
-                <span class="days-warning">{{item.daysUntilStockOut}} days left</span>
-                <i class="bi-chevron-{{isItemExpanded(item.forecastId) ? 'up' : 'down'}}"></i>
-              </div>
-            </div>
+      <button
+        class="tab china-tab"
+        [class.active]="selectedTab === 'china'"
+        (click)="selectedTab = 'china'">
+        <i class="bi bi-geo-alt-fill"></i>
+        China Stock
+        <span class="badge">{{chinaCount}}</span>
+      </button>
 
-            <div class="card-summary">
-              <div class="summary-item">
-                <i class="bi-box-seam"></i>
-                <div>
-                  <div class="summary-label">Current Stock</div>
-                  <div class="summary-value">{{item.currentStock}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cart-plus"></i>
-                <div>
-                  <div class="summary-label">Order Quantity</div>
-                  <div class="summary-value highlight">{{item.recommendedOrderQuantity}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cash-coin"></i>
-                <div>
-                  <div class="summary-label">Estimated Cost</div>
-                  <div class="summary-value cost">{{formatCurrency(item.estimatedOrderCost)}}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-details" *ngIf="isItemExpanded(item.forecastId)">
-              <div class="details-grid">
-                <div class="detail-box">
-                  <div class="detail-label">Daily Usage</div>
-                  <div class="detail-value">{{item.averageDailyUsage}} units/day</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Weekly Usage</div>
-                  <div class="detail-value">{{item.averageWeeklyUsage}} units/week</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Monthly Usage</div>
-                  <div class="detail-value">{{item.averageMonthlyUsage}} units/month</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Stockout Date</div>
-                  <div class="detail-value">{{formatDate(item.estimatedStockOutDate)}}</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Safety Stock</div>
-                  <div class="detail-value">{{item.safetyStockDays}} days</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Lead Time</div>
-                  <div class="detail-value">{{item.leadTimeDays}} days</div>
-                </div>
-              </div>
-
-              <div class="recommendation-note" *ngIf="item.recommendations">
-                <i class="bi-lightbulb-fill"></i>
-                <div class="note-content">{{item.recommendations}}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="empty-message" *ngIf="recommendations.urgentItems.length === 0">
-          <i class="bi-check-circle-fill"></i>
-          <p>No urgent orders needed at this time</p>
-        </div>
-      </div>
-
-      <!-- Soon to Order Tab -->
-      <div class="tab-content" *ngIf="selectedTab === 'soon'">
-        <div class="tab-header">
-          <h2>📅 Plan Ahead - Soon to Order</h2>
-          <p>These items should be planned for ordering in the coming weeks</p>
-        </div>
-
-        <div class="items-list">
-          <div class="recommendation-card soon" *ngFor="let item of recommendations.soonToOrderItems">
-            <div class="card-header" (click)="toggleItemExpansion(item.forecastId)">
-              <div class="card-title-section">
-                <h3 class="item-name">{{item.stockItemName}}</h3>
-                <span class="stock-type-badge">{{item.stockType}}</span>
-              </div>
-              <div class="card-actions">
-                <span class="days-info">{{item.daysUntilStockOut}} days remaining</span>
-                <i class="bi-chevron-{{isItemExpanded(item.forecastId) ? 'up' : 'down'}}"></i>
-              </div>
-            </div>
-
-            <div class="card-summary">
-              <div class="summary-item">
-                <i class="bi-box-seam"></i>
-                <div>
-                  <div class="summary-label">Current Stock</div>
-                  <div class="summary-value">{{item.currentStock}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cart-plus"></i>
-                <div>
-                  <div class="summary-label">Order Quantity</div>
-                  <div class="summary-value highlight">{{item.recommendedOrderQuantity}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cash-coin"></i>
-                <div>
-                  <div class="summary-label">Estimated Cost</div>
-                  <div class="summary-value cost">{{formatCurrency(item.estimatedOrderCost)}}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-details" *ngIf="isItemExpanded(item.forecastId)">
-              <div class="details-grid">
-                <div class="detail-box">
-                  <div class="detail-label">Daily Usage</div>
-                  <div class="detail-value">{{item.averageDailyUsage}} units/day</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Weekly Usage</div>
-                  <div class="detail-value">{{item.averageWeeklyUsage}} units/week</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Monthly Usage</div>
-                  <div class="detail-value">{{item.averageMonthlyUsage}} units/month</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Stockout Date</div>
-                  <div class="detail-value">{{formatDate(item.estimatedStockOutDate)}}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="empty-message" *ngIf="recommendations.soonToOrderItems.length === 0">
-          <i class="bi-check-circle-fill"></i>
-          <p>No items planned for upcoming orders</p>
-        </div>
-      </div>
-
-      <!-- China Stock Tab -->
-      <div class="tab-content" *ngIf="selectedTab === 'china'">
-        <div class="tab-header china">
-          <h2>🇨🇳 China Stock Orders</h2>
-          <div class="group-summary">
-            <div class="group-stat">
-              <span class="stat-label">Items:</span>
-              <span class="stat-value">{{recommendations.chinaStockOrders.itemCount}}</span>
-            </div>
-            <div class="group-stat">
-              <span class="stat-label">Total Cost:</span>
-              <span class="stat-value">{{formatCurrency(recommendations.chinaStockOrders.totalCost)}}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="items-list">
-          <div class="recommendation-card china" *ngFor="let item of recommendations.chinaStockOrders.items">
-            <div class="card-header" (click)="toggleItemExpansion(item.forecastId)">
-              <div class="card-title-section">
-                <h3 class="item-name">{{item.stockItemName}}</h3>
-                <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
-                  {{item.urgencyLevel}}
-                </span>
-              </div>
-              <div class="card-actions">
-                <span class="days-info">{{item.daysUntilStockOut}} days</span>
-                <i class="bi-chevron-{{isItemExpanded(item.forecastId) ? 'up' : 'down'}}"></i>
-              </div>
-            </div>
-
-            <div class="card-summary">
-              <div class="summary-item">
-                <i class="bi-box-seam"></i>
-                <div>
-                  <div class="summary-label">Current</div>
-                  <div class="summary-value">{{item.currentStock}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cart-plus"></i>
-                <div>
-                  <div class="summary-label">Order</div>
-                  <div class="summary-value highlight">{{item.recommendedOrderQuantity}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cash-coin"></i>
-                <div>
-                  <div class="summary-label">Cost</div>
-                  <div class="summary-value cost">{{formatCurrency(item.estimatedOrderCost)}}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-details" *ngIf="isItemExpanded(item.forecastId)">
-              <div class="details-grid">
-                <div class="detail-box">
-                  <div class="detail-label">Daily Usage</div>
-                  <div class="detail-value">{{item.averageDailyUsage}} units</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Stockout Date</div>
-                  <div class="detail-value">{{formatDate(item.estimatedStockOutDate)}}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="empty-message" *ngIf="recommendations.chinaStockOrders.itemCount === 0">
-          <i class="bi-check-circle-fill"></i>
-          <p>No China stock orders needed</p>
-        </div>
-      </div>
-
-      <!-- Thai Stock Tab -->
-      <div class="tab-content" *ngIf="selectedTab === 'thai'">
-        <div class="tab-header thai">
-          <h2>🇹🇭 Thai Stock Orders</h2>
-          <div class="group-summary">
-            <div class="group-stat">
-              <span class="stat-label">Items:</span>
-              <span class="stat-value">{{recommendations.thaiStockOrders.itemCount}}</span>
-            </div>
-            <div class="group-stat">
-              <span class="stat-label">Total Cost:</span>
-              <span class="stat-value">{{formatCurrency(recommendations.thaiStockOrders.totalCost)}}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="items-list">
-          <div class="recommendation-card thai" *ngFor="let item of recommendations.thaiStockOrders.items">
-            <div class="card-header" (click)="toggleItemExpansion(item.forecastId)">
-              <div class="card-title-section">
-                <h3 class="item-name">{{item.stockItemName}}</h3>
-                <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
-                  {{item.urgencyLevel}}
-                </span>
-              </div>
-              <div class="card-actions">
-                <span class="days-info">{{item.daysUntilStockOut}} days</span>
-                <i class="bi-chevron-{{isItemExpanded(item.forecastId) ? 'up' : 'down'}}"></i>
-              </div>
-            </div>
-
-            <div class="card-summary">
-              <div class="summary-item">
-                <i class="bi-box-seam"></i>
-                <div>
-                  <div class="summary-label">Current</div>
-                  <div class="summary-value">{{item.currentStock}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cart-plus"></i>
-                <div>
-                  <div class="summary-label">Order</div>
-                  <div class="summary-value highlight">{{item.recommendedOrderQuantity}} units</div>
-                </div>
-              </div>
-              <div class="summary-item">
-                <i class="bi-cash-coin"></i>
-                <div>
-                  <div class="summary-label">Cost</div>
-                  <div class="summary-value cost">{{formatCurrency(item.estimatedOrderCost)}}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-details" *ngIf="isItemExpanded(item.forecastId)">
-              <div class="details-grid">
-                <div class="detail-box">
-                  <div class="detail-label">Daily Usage</div>
-                  <div class="detail-value">{{item.averageDailyUsage}} units</div>
-                </div>
-                <div class="detail-box">
-                  <div class="detail-label">Stockout Date</div>
-                  <div class="detail-value">{{formatDate(item.estimatedStockOutDate)}}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="empty-message" *ngIf="recommendations.thaiStockOrders.itemCount === 0">
-          <i class="bi-check-circle-fill"></i>
-          <p>No Thai stock orders needed</p>
-        </div>
-      </div>
+      <button
+        class="tab thai-tab"
+        [class.active]="selectedTab === 'thai'"
+        (click)="selectedTab = 'thai'">
+        <i class="bi bi-house-fill"></i>
+        Thai Stock
+        <span class="badge">{{thaiCount}}</span>
+      </button>
     </div>
+
+    <!-- ============================================ -->
+    <!-- รายการสินค้า - แสดงเต็มเลย ไม่ต้อง Expand -->
+    <!-- ============================================ -->
+    <div class="items-container">
+
+      <!-- สรุปของ Tab ปัจจุบัน -->
+      <div class="tab-summary">
+        <div class="summary-info">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>แสดง {{filteredItems.length}} รายการ</span>
+        </div>
+        <div class="summary-stats">
+          <span>รวม: <strong>{{formatNumber(totalQuantity)}}</strong> ชิ้น</span>
+          <span>•</span>
+          <span>ต้นทุน: <strong>{{formatCurrency(totalCost)}}</strong></span>
+        </div>
+      </div>
+
+      <!-- รายการสินค้า - Card แบบเรียบง่าย -->
+      <div class="items-grid">
+        <div
+          class="item-card"
+          *ngFor="let item of filteredItems"
+          [ngClass]="getUrgencyClass(item.urgencyLevel)">
+
+          <!-- Header -->
+          <div class="item-header">
+            <div class="item-title">
+              <h3>{{item.stockItemName}}</h3>
+              <span class="stock-type">{{item.stockType}}</span>
+            </div>
+            <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
+              {{item.urgencyLevel}}
+            </span>
+          </div>
+
+          <!-- ข้อมูลสำคัญ - แสดงเต็มเลย -->
+          <div class="item-content">
+
+            <!-- สถานะปัจจุบัน -->
+            <div class="info-section current">
+              <h4>📦 สถานะปัจจุบัน</h4>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">Stock คงเหลือ:</span>
+                  <span class="value">{{formatNumber(item.currentStock)}} ชิ้น</span>
+                </div>
+                <div class="info-item warning">
+                  <span class="label">จะหมดใน:</span>
+                  <span class="value">{{item.daysUntilStockOut}} วัน</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">ใช้ต่อวัน:</span>
+                  <span class="value">{{formatNumber(item.averageDailyUsage)}} ชิ้น</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">ใช้ต่อเดือน:</span>
+                  <span class="value">{{formatNumber(item.averageMonthlyUsage)}} ชิ้น</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- คำแนะนำการสั่งซื้อ -->
+            <div class="info-section recommendation">
+              <h4>✅ คำแนะนำ</h4>
+              <div class="recommendation-box">
+                <div class="rec-item highlight">
+                  <i class="bi bi-cart-plus-fill"></i>
+                  <div>
+                    <div class="rec-label">แนะนำสั่งซื้อ</div>
+                    <div class="rec-value">{{formatNumber(item.recommendedOrderQuantity)}} ชิ้น</div>
+                  </div>
+                </div>
+                <div class="rec-item">
+                  <i class="bi bi-cash-stack"></i>
+                  <div>
+                    <div class="rec-label">ต้นทุน</div>
+                    <div class="rec-value cost">{{formatCurrency(item.estimatedOrderCost)}}</div>
+                  </div>
+                </div>
+                <div class="rec-item">
+                  <i class="bi bi-calendar-check"></i>
+                  <div>
+                    <div class="rec-label">Lead Time</div>
+                    <div class="rec-value">{{item.leadTimeDays}} วัน</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredItems.length === 0">
+        <i class="bi bi-check-circle-fill"></i>
+        <h3>ไม่มีรายการที่ต้องสั่งซื้อ</h3>
+        <p>Stock ทุกรายการเพียงพอ</p>
+      </div>
+
+    </div>
+
   </div>
 
-  <div class="empty-state" *ngIf="!loading && !recommendations">
-    <i class="bi-cart-check"></i>
-    <h3>No Recommendations Available</h3>
-    <p>Calculate forecasts to generate order recommendations</p>
+  <!-- ============================================ -->
+  <!-- Empty State - ยังไม่มีข้อมูล -->
+  <!-- ============================================ -->
+  <div class="no-data" *ngIf="!loading && !recommendations">
+    <i class="bi bi-inbox"></i>
+    <h3>ยังไม่มีข้อมูล</h3>
+    <p>กรุณาคำนวณ Forecast ก่อน</p>
+    <button class="btn-primary" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      กลับหน้าหลัก
+    </button>
   </div>
+
 </div>

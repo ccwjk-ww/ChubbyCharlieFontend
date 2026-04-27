@@ -1,0 +1,565 @@
+<!--&lt;!&ndash; multi-lot-ingredient.component.html &ndash;&gt;-->
+<!--<div class="ingredient-container" [formGroup]="ingredientForm">-->
+<!--  &lt;!&ndash; ⭐ Debug Info (ลบออกหลังจากแก้ไขเสร็จ) &ndash;&gt;-->
+<!--&lt;!&ndash;  <div class="debug-info" style="background: #f0f9ff; padding: 8px; margin-bottom: 12px; border-radius: 4px; font-size: 12px;">&ndash;&gt;-->
+<!--&lt;!&ndash;    <strong>🔍 Debug:</strong>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div>Stock Options: {{stockOptions.length}} items</div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div>Filtered Stocks: {{filteredStocks.length}} items</div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div>Allocation Mode: {{allocationMode}}</div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div>Allocations: {{allocationsArray.length}}</div>&ndash;&gt;-->
+<!--&lt;!&ndash;  </div>&ndash;&gt;-->
+
+<!--  <div class="ingredient-header">-->
+<!--    <h4>ส่วนประกอบที่ {{ingredientIndex + 1}}</h4>-->
+<!--    <div class="header-actions">-->
+<!--      <button-->
+<!--        type="button"-->
+<!--        class="mode-toggle-btn"-->
+<!--        [class.multi-lot]="allocationMode === 'MULTI_LOT'"-->
+<!--        (click)="toggleAllocationMode()">-->
+<!--        <i [class]="allocationMode === 'SINGLE' ? 'bi-layers' : 'bi-box-seam'"></i>-->
+<!--        {{allocationMode === 'SINGLE' ? 'เปลี่ยนเป็น Multi-Lot' : 'เปลี่ยนกลับเป็น Single'}}-->
+<!--      </button>-->
+<!--      <button-->
+<!--        type="button"-->
+<!--        class="remove-btn"-->
+<!--        (click)="remove.emit()">-->
+<!--        <i class="bi-trash"></i>-->
+<!--      </button>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Basic Info &ndash;&gt;-->
+<!--  <div class="form-grid">-->
+<!--    <div class="form-group">-->
+<!--      <label>ชื่อส่วนประกอบ <span class="required">*</span></label>-->
+<!--      <input-->
+<!--        formControlName="ingredientName"-->
+<!--        placeholder="เช่น ถุงเท้าสีดำข้อสั้น"-->
+<!--        class="form-control"-->
+<!--        [class.error]="ingredientForm.get('ingredientName')?.invalid &&-->
+<!--                       ingredientForm.get('ingredientName')?.touched">-->
+<!--      <div class="error-message" *ngIf="ingredientForm.get('ingredientName')?.invalid && ingredientForm.get('ingredientName')?.touched">-->
+<!--        กรุณากรอกชื่อส่วนประกอบ-->
+<!--      </div>-->
+<!--    </div>-->
+
+<!--    <div class="form-group">-->
+<!--      <label>จำนวนที่ต้องใช้ <span class="required">*</span></label>-->
+<!--      <input-->
+<!--        formControlName="requiredQuantity"-->
+<!--        type="number"-->
+<!--        min="0.01"-->
+<!--        step="0.01"-->
+<!--        placeholder="0"-->
+<!--        (input)="onRequiredQuantityChange()"-->
+<!--        class="form-control"-->
+<!--        [class.error]="ingredientForm.get('requiredQuantity')?.invalid &&-->
+<!--                       ingredientForm.get('requiredQuantity')?.touched">-->
+<!--      <div class="error-message" *ngIf="ingredientForm.get('requiredQuantity')?.invalid && ingredientForm.get('requiredQuantity')?.touched">-->
+<!--        กรุณากรอกจำนวนที่มากกว่า 0-->
+<!--      </div>-->
+<!--    </div>-->
+
+<!--    <div class="form-group">-->
+<!--      &lt;!&ndash; ⭐ แก้ไข: เปลี่ยนจาก input เป็น select dropdown &ndash;&gt;-->
+<!--      <label>หน่วย <span class="required">*</span></label>-->
+<!--      <select-->
+<!--        formControlName="unit"-->
+<!--        class="form-control"-->
+<!--        [class.error]="ingredientForm.get('unit')?.invalid &&-->
+<!--                       ingredientForm.get('unit')?.touched">-->
+<!--        <option value="">เลือกหน่วย</option>-->
+<!--        <option *ngFor="let unit of commonUnits" [value]="unit">{{unit}}</option>-->
+<!--      </select>-->
+<!--      <div class="error-message" *ngIf="ingredientForm.get('unit')?.invalid && ingredientForm.get('unit')?.touched">-->
+<!--        กรุณาเลือกหน่วย-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; SINGLE MODE &ndash;&gt;-->
+<!--  <div class="single-mode-section" *ngIf="allocationMode === 'SINGLE'">-->
+<!--    <div class="form-group">-->
+<!--      <label>เลือกจาก Stock</label>-->
+<!--      &lt;!&ndash; ⭐ Debug ชั่วคราว &ndash;&gt;-->
+<!--      <div style="font-size: 11px; color: #666; margin-bottom: 4px;">-->
+<!--        Available: {{stockOptions.length}} stocks-->
+<!--      </div>-->
+<!--      &lt;!&ndash; ⭐ แก้ไข: เพิ่ม (change) event &ndash;&gt;-->
+<!--      <select-->
+<!--        formControlName="stockItemId"-->
+<!--        (change)="onSingleStockChange($any($event.target).value)"-->
+<!--        class="form-control">-->
+<!--        <option value="">เลือก Stock Item ({{stockOptions.length}} รายการ)</option>-->
+<!--        <option *ngFor="let stock of stockOptions" [value]="stock.stockItemId">-->
+<!--          {{getStockOptionDisplay(stock)}}-->
+<!--        </option>-->
+<!--      </select>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; MULTI-LOT MODE &ndash;&gt;-->
+<!--  <div class="multi-lot-section" *ngIf="allocationMode === 'MULTI_LOT'">-->
+<!--    <div class="multi-lot-header">-->
+<!--      <h5>การจัดสรรสต็อก (Multi-Lot)</h5>-->
+<!--      <div class="allocation-summary">-->
+<!--        <span class="summary-item">-->
+<!--          <i class="bi-box-seam"></i>-->
+<!--          จัดสรรแล้ว: <strong>{{totalAllocated.toFixed(2)}}</strong>-->
+<!--        </span>-->
+<!--        <span class="summary-item remaining" [class.warning]="!isFullyAllocated()">-->
+<!--          <i class="bi-exclamation-triangle"></i>-->
+<!--          เหลือ: <strong>{{getRemainingQuantity().toFixed(2)}}</strong>-->
+<!--        </span>-->
+<!--        <span class="summary-item" *ngIf="isFullyAllocated()">-->
+<!--          <i class="bi-check-circle text-success"></i>-->
+<!--          จัดสรรครบแล้ว-->
+<!--        </span>-->
+<!--      </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Quick Actions &ndash;&gt;-->
+<!--    <div class="quick-actions" *ngIf="allocationsArray.length > 1">-->
+<!--      <button-->
+<!--        type="button"-->
+<!--        class="quick-action-btn"-->
+<!--        (click)="autoAllocateProportionally()">-->
+<!--        <i class="bi-sliders"></i>-->
+<!--        จัดสรรเท่ากัน-->
+<!--      </button>-->
+<!--      <button-->
+<!--        type="button"-->
+<!--        class="quick-action-btn"-->
+<!--        (click)="allocateRemainingToLast()"-->
+<!--        *ngIf="getRemainingQuantity() > 0">-->
+<!--        <i class="bi-arrow-down-square"></i>-->
+<!--        จัดสรรที่เหลือให้ตัวสุดท้าย-->
+<!--      </button>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Allocations List &ndash;&gt;-->
+<!--    <div class="allocations-list" formArrayName="stockAllocations">-->
+<!--      <div-->
+<!--        class="allocation-item"-->
+<!--        *ngFor="let allocation of allocationsArray.controls; let i = index"-->
+<!--        [formGroupName]="i">-->
+
+<!--        <div class="allocation-priority">-->
+<!--          <span class="priority-badge">{{i + 1}}</span>-->
+<!--        </div>-->
+
+<!--        <div class="allocation-content">-->
+<!--          <div class="form-grid-allocation">-->
+<!--            <div class="form-group">-->
+<!--              <label>เลือก Stock <span class="required">*</span></label>-->
+
+<!--              &lt;!&ndash; ⭐ เพิ่ม debug ชั่วคราว &ndash;&gt;-->
+<!--              <div style="font-size: 11px; color: #666; margin-bottom: 4px;">-->
+<!--                Available: {{filteredStocks.length}} stocks-->
+<!--              </div>-->
+
+<!--              <select-->
+<!--                formControlName="stockItemId"-->
+<!--                (change)="onAllocationStockChange(i, $any($event.target).value)"-->
+<!--                class="form-control"-->
+<!--                [class.error]="allocation.get('stockItemId')?.invalid &&-->
+<!--                               allocation.get('stockItemId')?.touched">-->
+<!--                <option value="">&#45;&#45; เลือก Stock ({{filteredStocks.length}} รายการ) &#45;&#45;</option>-->
+<!--                <option *ngFor="let stock of filteredStocks" [value]="stock.stockItemId">-->
+<!--                  {{getStockOptionDisplay(stock)}}-->
+<!--                </option>-->
+<!--              </select>-->
+<!--              <small class="stock-info" *ngIf="allocation.get('lotName')?.value">-->
+<!--                <i class="bi-box"></i> {{allocation.get('lotName')?.value}}-->
+<!--              </small>-->
+<!--              &lt;!&ndash; ⭐ แก้ไข: เพิ่ม error message &ndash;&gt;-->
+<!--              <div class="error-message" *ngIf="allocation.get('stockItemId')?.invalid && allocation.get('stockItemId')?.touched">-->
+<!--                กรุณาเลือก Stock-->
+<!--              </div>-->
+<!--            </div>-->
+
+<!--            <div class="form-group">-->
+<!--              <label>จำนวนจัดสรร <span class="required">*</span></label>-->
+<!--              <input-->
+<!--                formControlName="allocatedQuantity"-->
+<!--                type="number"-->
+<!--                min="0.01"-->
+<!--                step="0.01"-->
+<!--                placeholder="0"-->
+<!--                (input)="onAllocatedQuantityChange()"-->
+<!--                class="form-control"-->
+<!--                [class.error]="allocation.get('allocatedQuantity')?.invalid &&-->
+<!--                               allocation.get('allocatedQuantity')?.touched">-->
+<!--              <small class="available-info" *ngIf="allocation.get('availableQuantity')?.value">-->
+<!--                คงเหลือ: {{allocation.get('availableQuantity')?.value}}-->
+<!--                {{ingredientForm.get('unit')?.value}}-->
+<!--              </small>-->
+<!--              &lt;!&ndash; ⭐ แก้ไข: เพิ่ม error message &ndash;&gt;-->
+<!--              <div class="error-message" *ngIf="allocation.get('allocatedQuantity')?.invalid && allocation.get('allocatedQuantity')?.touched">-->
+<!--                กรุณากรอกจำนวนที่มากกว่า 0-->
+<!--              </div>-->
+<!--            </div>-->
+
+<!--            <div class="form-group">-->
+<!--              <label>ต้นทุน</label>-->
+<!--              <div class="cost-display">-->
+<!--                <span class="unit-cost">-->
+<!--                  ฿{{allocation.get('unitCost')?.value?.toFixed(3) || '0.000'}} / หน่วย-->
+<!--                </span>-->
+<!--                <span class="total-cost">-->
+<!--                  รวม: ฿{{getAllocationCost(i).toFixed(2)}}-->
+<!--                </span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+
+<!--        <button-->
+<!--          type="button"-->
+<!--          class="remove-allocation-btn"-->
+<!--          (click)="removeAllocation(i)"-->
+<!--          [disabled]="allocationsArray.length === 1">-->
+<!--          <i class="bi-x"></i>-->
+<!--        </button>-->
+<!--      </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Add Allocation Button &ndash;&gt;-->
+<!--    <button-->
+<!--      type="button"-->
+<!--      class="add-allocation-btn"-->
+<!--      (click)="addAllocation()">-->
+<!--      <i class="bi-plus-circle"></i>-->
+<!--      เพิ่มการจัดสรร-->
+<!--    </button>-->
+
+<!--    &lt;!&ndash; Total Cost Summary &ndash;&gt;-->
+<!--    <div class="cost-summary" *ngIf="allocationsArray.length > 0">-->
+<!--      <div class="summary-row">-->
+<!--        <span>ต้นทุนรวมทั้งหมด:</span>-->
+<!--        <strong class="total-amount">฿{{getTotalCost().toFixed(2)}}</strong>-->
+<!--      </div>-->
+<!--      <div class="summary-row" *ngIf="isFullyAllocated()">-->
+<!--        <span>ต้นทุนต่อหน่วย:</span>-->
+<!--        <strong>฿{{(getTotalCost() / totalAllocated).toFixed(3)}}</strong>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Notes &ndash;&gt;-->
+<!--  <div class="form-group">-->
+<!--    <label>หมายเหตุ</label>-->
+<!--    <textarea-->
+<!--      formControlName="notes"-->
+<!--      rows="2"-->
+<!--      class="form-control"-->
+<!--      placeholder="หมายเหตุเพิ่มเติม"></textarea>-->
+<!--  </div>-->
+<!--</div>-->
+
+
+<!-- multi-lot-ingredient.component.html -->
+<div class="ingredient-container" [formGroup]="ingredientForm">
+
+  <div class="ingredient-header">
+    <h4>ส่วนประกอบที่ {{ingredientIndex + 1}}</h4>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="mode-toggle-btn"
+        [class.multi-lot]="allocationMode === 'MULTI_LOT'"
+        (click)="toggleAllocationMode()">
+        <i [class]="allocationMode === 'SINGLE' ? 'bi-layers' : 'bi-box-seam'"></i>
+        {{allocationMode === 'SINGLE' ? 'เปลี่ยนเป็น Multi-Lot' : 'เปลี่ยนกลับเป็น Single'}}
+      </button>
+      <button type="button" class="remove-btn" (click)="remove.emit()">
+        <i class="bi-trash"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Basic Info -->
+  <div class="form-grid">
+    <div class="form-group">
+      <label>ชื่อส่วนประกอบ <span class="required">*</span></label>
+      <input
+        formControlName="ingredientName"
+        placeholder="เช่น ถุงเท้าสีดำข้อสั้น"
+        class="form-control"
+        [class.error]="ingredientForm.get('ingredientName')?.invalid && ingredientForm.get('ingredientName')?.touched">
+      <div class="error-message" *ngIf="ingredientForm.get('ingredientName')?.invalid && ingredientForm.get('ingredientName')?.touched">
+        กรุณากรอกชื่อส่วนประกอบ
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>จำนวนที่ต้องใช้ <span class="required">*</span></label>
+      <input
+        formControlName="requiredQuantity"
+        type="number"
+        min="0.01"
+        step="0.01"
+        placeholder="0"
+        (input)="onRequiredQuantityChange()"
+        class="form-control"
+        [class.error]="ingredientForm.get('requiredQuantity')?.invalid && ingredientForm.get('requiredQuantity')?.touched">
+      <div class="error-message" *ngIf="ingredientForm.get('requiredQuantity')?.invalid && ingredientForm.get('requiredQuantity')?.touched">
+        กรุณากรอกจำนวนที่มากกว่า 0
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>หน่วย <span class="required">*</span></label>
+      <select
+        formControlName="unit"
+        class="form-control"
+        [class.error]="ingredientForm.get('unit')?.invalid && ingredientForm.get('unit')?.touched">
+        <option value="">เลือกหน่วย</option>
+        <option *ngFor="let unit of commonUnits" [value]="unit">{{unit}}</option>
+      </select>
+      <div class="error-message" *ngIf="ingredientForm.get('unit')?.invalid && ingredientForm.get('unit')?.touched">
+        กรุณาเลือกหน่วย
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SINGLE MODE — Searchable select
+  ════════════════════════════════════════════ -->
+  <div class="single-mode-section" *ngIf="allocationMode === 'SINGLE'">
+    <div class="form-group">
+      <label>เลือกจาก Stock</label>
+      <div class="searchable-select">
+        <div class="ss-input-row">
+          <input
+            type="text"
+            class="form-control ss-input"
+            [placeholder]="'ค้นหาหรือเลือก Stock (' + stockOptions.length + ' รายการ)'"
+            [(ngModel)]="singleSearchTerm"
+            [ngModelOptions]="{standalone: true}"
+            (input)="onSingleSearchInput()"
+            (focus)="openSingleDropdown()"
+            (blur)="closeSingleDropdown()"
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="ss-clear-btn"
+            *ngIf="ingredientForm.get('stockItemId')?.value"
+            (mousedown)="clearSingleStock()">
+            ✕
+          </button>
+          <span class="ss-chevron" [class.open]="singleDropdownOpen">▾</span>
+        </div>
+
+        <div class="ss-dropdown-list" *ngIf="singleDropdownOpen">
+          <div class="ss-empty" *ngIf="singleFilteredStocks.length === 0">
+            ไม่พบรายการที่ค้นหา
+          </div>
+          <div
+            class="ss-option"
+            *ngFor="let stock of singleFilteredStocks"
+            [class.selected]="ingredientForm.get('stockItemId')?.value?.toString() === stock.stockItemId.toString()"
+            (mousedown)="selectSingleStock(stock)">
+            <span class="ss-option-name">{{stock.name}}</span>
+            <span class="ss-option-meta">
+              <span class="ss-tag ss-tag-lot" *ngIf="stock.lotName">{{stock.lotName}}</span>
+              <span class="ss-tag"
+                    [class.ss-tag-china]="stock.type === 'CHINA'"
+                    [class.ss-tag-thai]="stock.type === 'THAI'">
+                {{stock.type}}
+              </span>
+              <span class="ss-cost">฿{{stock.unitCost.toFixed(3)}}</span>
+              <span class="ss-qty">คงเหลือ: {{stock.availableQuantity}}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MULTI-LOT MODE
+  ════════════════════════════════════════════ -->
+  <div class="multi-lot-section" *ngIf="allocationMode === 'MULTI_LOT'">
+    <div class="multi-lot-header">
+      <h5>การจัดสรรสต็อก (Multi-Lot)</h5>
+      <div class="allocation-summary">
+        <span class="summary-item">
+          <i class="bi-box-seam"></i>
+          จัดสรรแล้ว: <strong>{{totalAllocated.toFixed(2)}}</strong>
+        </span>
+        <span class="summary-item remaining" [class.warning]="!isFullyAllocated()">
+          <i class="bi-exclamation-triangle"></i>
+          เหลือ: <strong>{{getRemainingQuantity().toFixed(2)}}</strong>
+        </span>
+        <span class="summary-item" *ngIf="isFullyAllocated()">
+          <i class="bi-check-circle text-success"></i>
+          จัดสรรครบแล้ว
+        </span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions" *ngIf="allocationsArray.length > 1">
+      <button type="button" class="quick-action-btn" (click)="autoAllocateProportionally()">
+        <i class="bi-sliders"></i> จัดสรรเท่ากัน
+      </button>
+      <button
+        type="button"
+        class="quick-action-btn"
+        (click)="allocateRemainingToLast()"
+        *ngIf="getRemainingQuantity() > 0">
+        <i class="bi-arrow-down-square"></i> จัดสรรที่เหลือให้ตัวสุดท้าย
+      </button>
+    </div>
+
+    <!-- Allocations List -->
+    <div class="allocations-list" formArrayName="stockAllocations">
+      <div
+        class="allocation-item"
+        *ngFor="let allocation of allocationsArray.controls; let i = index"
+        [formGroupName]="i">
+
+        <div class="allocation-priority">
+          <span class="priority-badge">{{i + 1}}</span>
+        </div>
+
+        <div class="allocation-content">
+          <div class="form-grid-allocation">
+
+            <!-- Searchable Stock Select -->
+            <div class="form-group">
+              <label>เลือก Stock <span class="required">*</span></label>
+              <div class="searchable-select">
+                <div class="ss-input-row">
+                  <input
+                    type="text"
+                    class="form-control ss-input"
+                    [class.error]="allocation.get('stockItemId')?.invalid && allocation.get('stockItemId')?.touched"
+                    [placeholder]="'ค้นหาหรือเลือก Stock (' + stockOptions.length + ' รายการ)'"
+                    [value]="allocationSearchTerms[i] || ''"
+                    (input)="onAllocSearchInput(i, $any($event.target).value)"
+                    (focus)="openAllocDropdown(i)"
+                    (blur)="closeAllocDropdown(i)"
+                    autocomplete="off"
+                  />
+                  <button
+                    type="button"
+                    class="ss-clear-btn"
+                    *ngIf="allocation.get('stockItemId')?.value"
+                    (mousedown)="clearAllocStock(i)">
+                    ✕
+                  </button>
+                  <span class="ss-chevron" [class.open]="allocationDropdownOpen[i]">▾</span>
+                </div>
+
+                <div class="ss-dropdown-list" *ngIf="allocationDropdownOpen[i]">
+                  <div class="ss-empty" *ngIf="getFilteredAllocStocks(i).length === 0">
+                    ไม่พบรายการที่ค้นหา
+                  </div>
+                  <div
+                    class="ss-option"
+                    *ngFor="let stock of getFilteredAllocStocks(i)"
+                    [class.selected]="allocation.get('stockItemId')?.value?.toString() === stock.stockItemId.toString()"
+                    (mousedown)="selectAllocStock(i, stock)">
+                    <span class="ss-option-name">{{stock.name}}</span>
+                    <span class="ss-option-meta">
+                      <span class="ss-tag ss-tag-lot" *ngIf="stock.lotName">{{stock.lotName}}</span>
+                      <span class="ss-tag"
+                            [class.ss-tag-china]="stock.type === 'CHINA'"
+                            [class.ss-tag-thai]="stock.type === 'THAI'">
+                        {{stock.type}}
+                      </span>
+                      <span class="ss-cost">฿{{stock.unitCost.toFixed(3)}}</span>
+                      <span class="ss-qty">คงเหลือ: {{stock.availableQuantity}}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <small class="stock-info" *ngIf="allocation.get('lotName')?.value">
+                <i class="bi-box"></i> {{allocation.get('lotName')?.value}}
+              </small>
+              <div class="error-message" *ngIf="allocation.get('stockItemId')?.invalid && allocation.get('stockItemId')?.touched">
+                กรุณาเลือก Stock
+              </div>
+            </div>
+
+            <!-- Allocated Quantity -->
+            <div class="form-group">
+              <label>จำนวนจัดสรร <span class="required">*</span></label>
+              <input
+                formControlName="allocatedQuantity"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0"
+                (input)="onAllocatedQuantityChange()"
+                class="form-control"
+                [class.error]="allocation.get('allocatedQuantity')?.invalid && allocation.get('allocatedQuantity')?.touched">
+              <small class="available-info" *ngIf="allocation.get('availableQuantity')?.value">
+                คงเหลือ: {{allocation.get('availableQuantity')?.value}}
+                {{ingredientForm.get('unit')?.value}}
+              </small>
+              <div class="error-message" *ngIf="allocation.get('allocatedQuantity')?.invalid && allocation.get('allocatedQuantity')?.touched">
+                กรุณากรอกจำนวนที่มากกว่า 0
+              </div>
+            </div>
+
+            <!-- Cost Display -->
+            <div class="form-group">
+              <label>ต้นทุน</label>
+              <div class="cost-display">
+                <span class="unit-cost">
+                  ฿{{allocation.get('unitCost')?.value?.toFixed(3) || '0.000'}} / หน่วย
+                </span>
+                <span class="total-cost">
+                  รวม: ฿{{getAllocationCost(i).toFixed(2)}}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="remove-allocation-btn"
+          (click)="removeAllocation(i)"
+          [disabled]="allocationsArray.length === 1">
+          <i class="bi-x"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Allocation Button -->
+    <button type="button" class="add-allocation-btn" (click)="addAllocation()">
+      <i class="bi-plus-circle"></i> เพิ่มการจัดสรร
+    </button>
+
+    <!-- Total Cost Summary -->
+    <div class="cost-summary" *ngIf="allocationsArray.length > 0">
+      <div class="summary-row">
+        <span>ต้นทุนรวมทั้งหมด:</span>
+        <strong class="total-amount">฿{{getTotalCost().toFixed(2)}}</strong>
+      </div>
+      <div class="summary-row" *ngIf="isFullyAllocated()">
+        <span>ต้นทุนต่อหน่วย:</span>
+        <strong>฿{{(getTotalCost() / totalAllocated).toFixed(3)}}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="form-group">
+    <label>หมายเหตุ</label>
+    <textarea
+      formControlName="notes"
+      rows="2"
+      class="form-control"
+      placeholder="หมายเหตุเพิ่มเติม"></textarea>
+  </div>
+
+</div>

@@ -1,1 +1,235 @@
 
+<div class="stock-check-modal">
+  <div class="modal-header" [class.success]="data.allAvailable" [class.warning]="!data.allAvailable">
+    <mat-icon>{{ data.allAvailable ? 'check_circle' : 'warning' }}</mat-icon>
+    <h2>เช็ค Stock: {{ data.orderNumber }}</h2>
+    <button mat-icon-button class="close-btn" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="modal-body">
+    <div class="status-banner" [class.success]="data.allAvailable" [class.warning]="!data.allAvailable">
+      <mat-icon>{{ data.allAvailable ? 'check_circle' : 'warning' }}</mat-icon>
+      <span>{{ data.allAvailable ? '✅ Stock เพียงพอทั้งหมด พร้อมตัด Stock' : '⚠️ Stock ไม่เพียงพอบางรายการ' }}</span>
+    </div>
+
+    <div class="details-container">
+      <div class="product-card" *ngFor="let detail of data.details; let i = index">
+        <div class="product-header">
+          <div class="product-info">
+            <span class="product-number">#{{ i + 1 }}</span>
+            <h3>{{ detail.productName }}</h3>
+          </div>
+          <div class="product-status">
+            <span class="badge" [class.success]="detail.available" [class.danger]="!detail.available">
+              <mat-icon>{{ detail.available ? 'check' : 'close' }}</mat-icon>
+              {{ detail.available ? 'เพียงพอ' : 'ไม่เพียงพอ' }}
+            </span>
+            <span class="quantity-badge">จำนวน: {{ detail.orderQuantity }}</span>
+          </div>
+        </div>
+
+        <div class="ingredients-table-container">
+
+          <!-- ============================================ -->
+          <!-- Loop through each ingredient -->
+          <!-- ============================================ -->
+          <div *ngFor="let ing of detail.ingredients" class="ingredient-section">
+
+            <div class="ingredient-header">
+              <h4>{{ ing.ingredientName }}</h4>
+              <span class="mode-badge" [class.multi-lot]="isMultiLot(ing)" [class.single]="!isMultiLot(ing)">
+                {{ isMultiLot(ing) ? 'MULTI-LOT' : 'SINGLE' }}
+              </span>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- ⭐ MULTI_LOT Mode -->
+            <!-- ============================================ -->
+            <div *ngIf="isMultiLot(ing)" class="multi-lot-section">
+              <table class="allocation-table">
+                <thead>
+                <tr>
+                  <th class="text-center">Priority</th>
+                  <th>Stock Name</th>
+                  <th class="text-center">Type</th>
+                  <th class="text-center">Lot</th>
+                  <th class="text-center">จัดสรร</th>
+                  <th class="text-center">คงเหลือ</th>
+                  <th class="text-center">สถานะ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let alloc of ing.stockAllocations"
+                    [class.danger-row]="!alloc.available">
+
+                  <!-- Priority Badge -->
+                  <td class="text-center">
+                    <span class="priority-badge">{{ alloc.allocationPriority }}</span>
+                  </td>
+
+                  <!-- Stock Name -->
+                  <td>
+                    <div class="stock-name-text">{{ alloc.stockName }}</div>
+                  </td>
+
+                  <!-- Stock Type -->
+                  <td class="text-center">
+                      <span class="type-badge"
+                            [class.china]="alloc.stockType === 'CHINA'"
+                            [class.thai]="alloc.stockType === 'THAI'">
+                        {{ alloc.stockType || '-' }}
+                      </span>
+                  </td>
+
+                  <!-- Lot Name -->
+                  <td class="text-center">
+                    <span class="lot-name" *ngIf="alloc.lotName">{{ alloc.lotName }}</span>
+                    <span class="text-muted" *ngIf="!alloc.lotName">-</span>
+                  </td>
+
+                  <!-- Allocated Quantity -->
+                  <td class="text-center">
+                    <span class="quantity-cell">{{ alloc.allocatedQuantity }} {{ ing.unit }}</span>
+                  </td>
+
+                  <!-- Available Quantity -->
+                  <td class="text-center">
+                      <span class="quantity-cell"
+                            [class.success-text]="alloc.available"
+                            [class.danger-text]="!alloc.available">
+                        {{ alloc.availableQuantity }} {{ ing.unit }}
+                      </span>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="text-center">
+                      <span class="status-badge"
+                            [class.success]="alloc.available"
+                            [class.danger]="!alloc.available">
+                        <mat-icon>{{ alloc.available ? 'check' : 'priority_high' }}</mat-icon>
+                        {{ alloc.available ? 'เพียงพอ' : 'ไม่พอ' }}
+                      </span>
+                  </td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr class="summary-row">
+                  <td colspan="4" class="text-right"><strong>รวม:</strong></td>
+                  <td class="text-center">
+                    <strong class="quantity-cell">{{ getTotalAllocated(ing) }} {{ ing.unit }}</strong>
+                  </td>
+                  <td class="text-center">
+                    <strong class="quantity-cell"
+                            [class.success-text]="ing.available"
+                            [class.danger-text]="!ing.available">
+                      {{ getTotalAvailable(ing) }} {{ ing.unit }}
+                    </strong>
+                  </td>
+                  <td class="text-center">
+                      <span class="status-badge"
+                            [class.success]="ing.available"
+                            [class.danger]="!ing.available">
+                        <mat-icon>{{ ing.available ? 'check' : 'priority_high' }}</mat-icon>
+                        {{ ing.available ? 'เพียงพอ' : 'ไม่พอ' }}
+                      </span>
+                  </td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- ⭐ SINGLE Mode (Original) -->
+            <!-- ============================================ -->
+            <div *ngIf="!isMultiLot(ing)" class="single-mode-section">
+              <table class="ingredients-table">
+                <thead>
+                <tr>
+                  <th>Stock Name</th>
+                  <th class="text-center">ประเภท</th>
+                  <th class="text-center">Stock Lot</th>
+                  <th class="text-center">ต้องการ</th>
+                  <th class="text-center">มีอยู่</th>
+                  <th class="text-center">สถานะ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr [class.danger-row]="!ing.available">
+                  <td>
+                    <div class="stock-name" *ngIf="ing.stockItemName">{{ ing.stockItemName }}</div>
+                    <span class="text-muted" *ngIf="!ing.stockItemName">-</span>
+                  </td>
+
+                  <!-- ประเภท Stock (CHINA/THAI) -->
+                  <td class="text-center">
+                      <span class="type-badge"
+                            [class.china]="ing.stockType === 'CHINA'"
+                            [class.thai]="ing.stockType === 'THAI'">
+                        {{ ing.stockType || '-' }}
+                      </span>
+                  </td>
+
+                  <!-- Stock Lot Information -->
+                  <td class="text-center">
+                    <div class="lot-info" *ngIf="ing.stockLotName">
+                      <div class="lot-name">{{ ing.stockLotName }}</div>
+                      <div class="lot-status"
+                           [class.active]="ing.stockLotStatus === 'ACTIVE'"
+                           [class.completed]="ing.stockLotStatus === 'COMPLETED'">
+                        {{ ing.stockLotStatus }}
+                      </div>
+                    </div>
+                    <span *ngIf="!ing.stockLotName" class="text-muted">-</span>
+                  </td>
+
+                  <td class="text-center">
+                    <span class="quantity-cell">{{ ing.requiredQuantity }} {{ ing.unit }}</span>
+                  </td>
+
+                  <td class="text-center">
+                      <span class="quantity-cell"
+                            [class.success-text]="ing.available"
+                            [class.danger-text]="!ing.available">
+                        {{ ing.currentStock !== null && ing.currentStock !== undefined ? ing.currentStock : '-' }} {{ ing.unit }}
+                      </span>
+                  </td>
+
+                  <td class="text-center">
+                      <span class="status-badge"
+                            [class.success]="ing.available"
+                            [class.danger]="!ing.available">
+                        <mat-icon>{{ ing.available ? 'check' : 'priority_high' }}</mat-icon>
+                        <span *ngIf="ing.available">เพียงพอ</span>
+                        <span *ngIf="!ing.available && ing.shortage">ขาด {{ ing.shortage }} {{ ing.unit }}</span>
+                        <span *ngIf="!ing.available && !ing.shortage">{{ ing.errorMessage || 'ไม่เพียงพอ' }}</span>
+                      </span>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button mat-button class="btn-secondary" (click)="close()">
+      <mat-icon>close</mat-icon>
+      ปิด
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      class="btn-primary"
+      [disabled]="!data.allAvailable"
+      (click)="confirmDeductStock()">
+      <mat-icon>done</mat-icon>
+      ยืนยันตัด Stock
+    </button>
+  </div>
+</div>

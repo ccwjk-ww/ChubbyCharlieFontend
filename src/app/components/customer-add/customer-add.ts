@@ -15,6 +15,7 @@ export class CustomerAddComponent implements OnInit {
   customerForm: FormGroup;
   isEditMode: boolean = false;
   customerId: number | null = null;
+  isSubmitting: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,7 +26,8 @@ export class CustomerAddComponent implements OnInit {
     this.customerForm = this.fb.group({
       customerName: ['', [Validators.required, Validators.minLength(2)]],
       customerAddress: ['', [Validators.required, Validators.minLength(5)]],
-      customerPhone: ['', [Validators.required, Validators.pattern(/^[0-9]{9,11}$/)]]
+      customerPhone: ['', [Validators.required, Validators.pattern(/^[0-9]{9,11}$/)]],
+      status: ['ACTIVE', Validators.required]
     });
   }
 
@@ -45,33 +47,46 @@ export class CustomerAddComponent implements OnInit {
           this.customerForm.patchValue({
             customerName: customer.customerName,
             customerAddress: customer.customerAddress,
-            customerPhone: customer.customerPhone
+            customerPhone: customer.customerPhone,
+            status: customer.status || 'ACTIVE'
           });
         },
-        error: (error) => console.error('Error loading customer:', error)
+        error: (error) => {
+          console.error('Error loading customer:', error);
+          alert('ไม่สามารถโหลดข้อมูลลูกค้าได้');
+        }
       });
     }
   }
 
   onSubmit(): void {
-    if (this.customerForm.valid) {
+    if (this.customerForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
       const customer: Customer = this.customerForm.value;
+
       if (this.isEditMode && this.customerId) {
         this.customerService.updateCustomer(this.customerId, customer).subscribe({
           next: () => {
-            alert('Customer updated successfully!');
+            alert('อัพเดทข้อมูลลูกค้าสำเร็จ!');
             this.router.navigate(['/customers']);
           },
-          error: (error) => console.error('Error updating customer:', error)
+          error: (error) => {
+            console.error('Error updating customer:', error);
+            alert('เกิดข้อผิดพลาดในการอัพเดทข้อมูล');
+            this.isSubmitting = false;
+          }
         });
       } else {
         this.customerService.createCustomer(customer).subscribe({
           next: () => {
-            alert('Customer added successfully!');
-            this.resetForm();
+            alert('เพิ่มลูกค้าสำเร็จ!');
             this.router.navigate(['/customers']);
           },
-          error: (error) => console.error('Error adding customer:', error)
+          error: (error) => {
+            console.error('Error adding customer:', error);
+            alert('เกิดข้อผิดพลาดในการเพิ่มลูกค้า');
+            this.isSubmitting = false;
+          }
         });
       }
     } else {
@@ -86,11 +101,12 @@ export class CustomerAddComponent implements OnInit {
     });
   }
 
-  private resetForm(): void {
-    this.customerForm.reset();
-  }
-
   goBack(): void {
     this.router.navigate(['/customers']);
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.customerForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
   }
 }

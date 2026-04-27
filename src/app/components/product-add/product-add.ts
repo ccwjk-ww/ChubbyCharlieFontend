@@ -3,11 +3,11 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 import { ProductService, Product, ProductCreateRequest, ProductIngredientRequest, StockOption } from '../../services/product.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
+import { MultiLotIngredientComponent } from '../multi-lot-ingredient/multi-lot-ingredient';
 @Component({
   selector: 'app-product-add',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, MultiLotIngredientComponent],
   templateUrl: './product-add.html',
   styleUrl: './product-add.css'
 })
@@ -72,11 +72,14 @@ export class ProductAddComponent implements OnInit {
     });
   }
 
+  // ⭐ แก้ไข: loadProduct - เพิ่ม logging
   loadProduct(): void {
     if (this.productId) {
       this.loading = true;
       this.productService.getProductById(this.productId).subscribe({
         next: (product) => {
+          console.log('📦 Loaded product:', product);
+
           this.productForm.patchValue({
             productName: product.productName,
             description: product.description,
@@ -86,14 +89,30 @@ export class ProductAddComponent implements OnInit {
             status: product.status || 'ACTIVE'
           });
 
-          // ⭐ โหลดรูปภาพปัจจุบัน
           if (product.imageUrl) {
             this.currentImageUrl = product.imageUrl;
             this.imagePreview = product.imageUrl;
           }
 
           if (product.ingredients && product.ingredients.length > 0) {
-            product.ingredients.forEach(ingredient => {
+            console.log('🔍 Loading ingredients:', product.ingredients);
+
+            product.ingredients.forEach((ingredient, index) => {
+              console.log(`  📌 Ingredient #${index + 1}:`, ingredient);
+
+              // ⭐ Log allocations
+              if (ingredient.stockAllocations) {
+                console.log(`    💰 Allocations:`, ingredient.stockAllocations);
+                ingredient.stockAllocations.forEach((alloc: any, allocIndex: number) => {
+                  console.log(`      - Allocation #${allocIndex + 1}:`, {
+                    stockItemId: alloc.stockItemId,
+                    quantity: alloc.allocatedQuantity,
+                    costPerUnit: alloc.costPerUnit,
+                    totalCost: alloc.totalCost
+                  });
+                });
+              }
+
               this.addIngredientFromData(ingredient);
             });
           } else {
@@ -103,7 +122,7 @@ export class ProductAddComponent implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading product:', error);
+          console.error('❌ Error loading product:', error);
           this.loading = false;
         }
       });
@@ -150,12 +169,46 @@ export class ProductAddComponent implements OnInit {
   }
 
   createIngredientFormGroup(data?: any): FormGroup {
-    return this.fb.group({
+    const group = this.fb.group({
       ingredientName: [data?.ingredientName || '', Validators.required],
       stockItemId: [data?.stockItemId || ''],
       requiredQuantity: [data?.requiredQuantity || '', [Validators.required, Validators.min(0.01)]],
       unit: [data?.unit || '', Validators.required],
-      notes: [data?.notes || '']
+      notes: [data?.notes || ''],
+
+      // ⭐ NEW: Multi-Lot fields
+      allocationMode: [data?.allocationMode || 'SINGLE'],
+      stockAllocations: this.fb.array([])
+    });
+
+    // ⭐ ถ้ามี allocations ให้เพิ่มเข้าไป
+    if (data?.stockAllocations && data.stockAllocations.length > 0) {
+      const allocationsArray = group.get('stockAllocations') as FormArray;
+      data.stockAllocations.forEach((alloc: any) => {
+        allocationsArray.push(this.createAllocationFormGroup(alloc));
+      });
+    }
+
+    return group;
+  }
+
+  // ⭐ NEW: สร้าง allocation form group
+  // ⭐ แก้ไข: createAllocationFormGroup
+  createAllocationFormGroup(data?: any): FormGroup {
+    console.log('🔧 Creating allocation form group with data:', data);
+
+    return this.fb.group({
+      stockItemId: [data?.stockItemId || '', Validators.required],
+      allocatedQuantity: [data?.allocatedQuantity || '', [Validators.required, Validators.min(0.01)]],
+      allocationPriority: [data?.allocationPriority || 1, [Validators.required, Validators.min(1)]],
+
+      // ⭐ เพิ่ม: สำหรับแสดงผลในหน้า Edit
+      stockItemName: [data?.stockItemName || ''],
+      unitCost: [data?.costPerUnit || 0],  // ⭐ สำคัญ: map จาก costPerUnit
+      totalCost: [data?.totalCost || 0],   // ⭐ สำคัญ: map จาก totalCost
+      lotName: [data?.lotName || ''],
+      availableQuantity: [data?.availableQuantity || 0],
+      stockType: [data?.stockType || '']   // ⭐ เพิ่ม stockType
     });
   }
 
@@ -173,52 +226,77 @@ export class ProductAddComponent implements OnInit {
     }
   }
 
-  onStockItemChange(index: number, stockItemId: string): void {
-    if (stockItemId) {
-      const selectedStock = this.stockOptions.find(opt => opt.stockItemId.toString() === stockItemId);
-      if (selectedStock) {
-        const ingredient = this.ingredientsArray.at(index);
-        if (!ingredient.get('ingredientName')?.value) {
-          ingredient.patchValue({
-            ingredientName: selectedStock.name
-          });
-        }
-      }
-    }
-  }
+
 
   onSubmit(): void {
     if (this.productForm.valid && this.ingredientsArray.length > 0) {
       this.loading = true;
       const formValue = this.productForm.value;
 
-      // ⭐ สร้าง ingredients สำหรับทั้ง Create และ Update
-      const ingredients: ProductIngredientRequest[] = formValue.ingredients.map((ing: any) => ({
-        stockItemId: ing.stockItemId ? parseInt(ing.stockItemId) : undefined,
-        ingredientName: ing.ingredientName,
-        requiredQuantity: parseFloat(ing.requiredQuantity),
-        unit: ing.unit,
-        notes: ing.notes
-      }));
+      // ⭐ ปรับปรุงการสร้าง ingredients
+      const ingredients: ProductIngredientRequest[] = formValue.ingredients.map((ing: any) => {
+        const ingredient: ProductIngredientRequest = {
+          ingredientName: ing.ingredientName,
+          requiredQuantity: parseFloat(ing.requiredQuantity),
+          unit: ing.unit,
+          notes: ing.notes || null,
+          allocationMode: ing.allocationMode || 'SINGLE'
+        };
 
-      // สร้าง request object
+        // ⭐ ถ้าเป็น SINGLE mode
+        if (ingredient.allocationMode === 'SINGLE') {
+          // ตรวจสอบว่ามี stockItemId หรือไม่
+          if (ing.stockItemId && ing.stockItemId !== '' && ing.stockItemId !== null) {
+            ingredient.stockItemId = parseInt(ing.stockItemId);
+          } else {
+            // ⭐ ถ้าไม่มี ให้ set เป็น undefined (จะไม่ส่งไปใน JSON)
+            ingredient.stockItemId = undefined;
+          }
+
+          // ⭐ ห้ามส่ง stockAllocations ใน SINGLE mode
+          ingredient.stockAllocations = undefined;
+        }
+
+        // ⭐ ถ้าเป็น MULTI_LOT mode
+        if (ingredient.allocationMode === 'MULTI_LOT') {
+          // ⭐ ห้ามส่ง stockItemId ใน MULTI_LOT mode
+          ingredient.stockItemId = undefined;
+
+          // ตรวจสอบว่ามี allocations หรือไม่
+          if (ing.stockAllocations && ing.stockAllocations.length > 0) {
+            ingredient.stockAllocations = ing.stockAllocations
+              .filter((alloc: any) => alloc.stockItemId && alloc.stockItemId !== '')
+              .map((alloc: any) => ({
+                stockItemId: parseInt(alloc.stockItemId),
+                allocatedQuantity: parseFloat(alloc.allocatedQuantity),
+                allocationPriority: parseInt(alloc.allocationPriority)
+              }));
+          } else {
+            // ถ้าไม่มี allocations ให้เป็น array ว่าง
+            ingredient.stockAllocations = [];
+          }
+        }
+
+        return ingredient;
+      });
+
+      console.log('📤 Prepared ingredients:', ingredients);
+
       const request: ProductCreateRequest = {
         productName: formValue.productName,
         description: formValue.description,
         sku: formValue.sku,
         category: formValue.category,
         sellingPrice: parseFloat(formValue.sellingPrice),
-        ingredients: ingredients
+        ingredients: ingredients,
+        status: formValue.status
       };
 
+      console.log('📤 Final request:', request);
+
       if (this.isEditMode && this.productId) {
-        // ============================================
-        // UPDATE MODE - ใช้ updateProductWithIngredients
-        // ============================================
+        // UPDATE MODE
         console.log('🔄 Update Mode - Product ID:', this.productId);
-        console.log('📤 Sending update data:', request);
-        console.log('🖼️ Selected file:', this.selectedFile ? this.selectedFile.name : 'None');
-        console.log('📊 Status from form:', formValue.status); // ⭐ ตรวจสอบสถานะ
 
         this.productService.updateProductWithIngredients(
           this.productId,
@@ -233,23 +311,14 @@ export class ProductAddComponent implements OnInit {
           },
           error: (error) => {
             console.error('❌ Error updating product:', error);
-            console.error('Error details:', {
-              status: error.status,
-              message: error.message,
-              error: error.error
-            });
             alert('เกิดข้อผิดพลาดในการอัปเดตสินค้า: ' + (error.error?.message || error.message));
             this.loading = false;
           }
         });
 
       } else {
-        // ============================================
         // CREATE MODE
-        // ============================================
         console.log('➕ Create Mode');
-        console.log('📤 Sending create request:', request);
-        console.log('🖼️ Selected file:', this.selectedFile ? this.selectedFile.name : 'None');
 
         this.productService.createProduct(
           request,
@@ -257,22 +326,11 @@ export class ProductAddComponent implements OnInit {
         ).subscribe({
           next: (createdProduct) => {
             console.log('✅ Create response:', createdProduct);
-
-            if (createdProduct.isUsingDefaultImage) {
-              alert('สร้างสินค้าสำเร็จ! (ใช้รูป Default)');
-            } else {
-              alert('สร้างสินค้าสำเร็จ!');
-            }
-
+            alert('สร้างสินค้าสำเร็จ!');
             this.router.navigate(['/products']);
           },
           error: (error) => {
             console.error('❌ Error creating product:', error);
-            console.error('Error details:', {
-              status: error.status,
-              message: error.message,
-              error: error.error
-            });
             alert('เกิดข้อผิดพลาดในการสร้างสินค้า: ' + (error.error?.message || error.message));
             this.loading = false;
           }
@@ -280,13 +338,29 @@ export class ProductAddComponent implements OnInit {
       }
     } else {
       console.warn('⚠️ Form is invalid or has no ingredients');
-      if (!this.productForm.valid) {
-        console.warn('Invalid fields:', Object.keys(this.productForm.controls)
-          .filter(key => this.productForm.get(key)?.invalid));
-      }
-      if (this.ingredientsArray.length === 0) {
-        console.warn('No ingredients added');
-      }
+
+      // ⭐ แสดงรายละเอียด validation errors
+      Object.keys(this.productForm.controls).forEach(key => {
+        const control = this.productForm.get(key);
+        if (control?.invalid) {
+          console.warn(`❌ Invalid field: ${key}`, control.errors);
+        }
+      });
+
+      // ตรวจสอบ ingredients
+      this.ingredientsArray.controls.forEach((ingredient, index) => {
+        if (ingredient.invalid) {
+          console.warn(`❌ Invalid ingredient #${index + 1}:`, ingredient.errors);
+          Object.keys((ingredient as FormGroup).controls).forEach(field => {
+            const fieldControl = ingredient.get(field);
+            if (fieldControl?.invalid) {
+              console.warn(`  - ${field}:`, fieldControl.errors);
+            }
+          });
+        }
+      });
+
+      alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
     }
   }
 
@@ -331,5 +405,28 @@ export class ProductAddComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/products']);
+  }
+  // ⭐ แก้ไข onStockItemChange ให้รองรับ Single Mode
+  onStockItemChange(index: number, stockItemId: string): void {
+    if (stockItemId) {
+      const selectedStock = this.stockOptions.find(opt => opt.stockItemId.toString() === stockItemId);
+      if (selectedStock) {
+        const ingredient = this.ingredientsArray.at(index);
+
+        // Auto-fill ingredient name ถ้ายังไม่มี
+        if (!ingredient.get('ingredientName')?.value) {
+          ingredient.patchValue({
+            ingredientName: selectedStock.name
+          });
+        }
+
+        // Auto-select unit (คู่) ถ้ายังไม่มี
+        if (!ingredient.get('unit')?.value) {
+          ingredient.patchValue({
+            unit: 'คู่'
+          });
+        }
+      }
+    }
   }
 }

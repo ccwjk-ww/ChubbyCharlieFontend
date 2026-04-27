@@ -405,7 +405,7 @@ export class ProductComponent implements OnInit {
   activeProduct: Product | null = null;
 
   // ⭐ View mode
-  viewMode: 'card' | 'table' = 'card';
+  viewMode: 'table' | 'card' = 'table';
 
   // ⭐ แก้ตรงนี้
   private apiUrl = environment.apiUrl;  // ใช้จาก environment
@@ -424,7 +424,7 @@ export class ProductComponent implements OnInit {
    * ⭐ Toggle view mode
    */
   toggleViewMode(): void {
-    this.viewMode = this.viewMode === 'card' ? 'table' : 'card';
+    this.viewMode = this.viewMode === 'table' ? 'card' : 'table';
   }
 
   /**

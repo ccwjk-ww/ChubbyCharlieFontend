@@ -246,3 +246,109 @@
 .submit-btn:active {
   animation: pulse 0.3s ease-in-out;
 }
+/* Form Section */
+.form-section {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #212529;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title i {
+  color: #007bff;
+}
+
+.required {
+  color: #dc3545;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* Input with Icon */
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.input-icon.icon-top {
+  top: 20px;
+  transform: none;
+}
+
+.form-control.with-icon {
+  padding-left: 42px;
+}
+
+.textarea.with-icon {
+  padding-left: 42px;
+}
+
+/* Success State */
+.form-control.success {
+  border-color: #28a745;
+  background-color: #f0fff4;
+}
+
+.form-control.success:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+/* Full Width */
+.full-width {
+  flex: 1 1 100% !important;
+}
+
+/* Textarea */
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+/* Error Message Improvements */
+.error-message {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  color: #dc3545;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f8d7da;
+  border-radius: 6px;
+  border-left: 3px solid #dc3545;
+}
+
+/* Submit Button States */
+.submit-btn .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

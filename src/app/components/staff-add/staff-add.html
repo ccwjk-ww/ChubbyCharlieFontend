@@ -1,205 +1,301 @@
 <div class="main-container">
   <div class="container">
     <div class="page-header">
-      <h1>{{isEditMode ? 'Edit Employee' : 'New Employee'}}</h1>
-      <p>{{isEditMode ? 'Update employee details' : 'Create account for a new employee'}}</p>
+      <h1>{{isEditMode ? 'แก้ไขข้อมูลพนักงาน' : 'เพิ่มพนักงานใหม่'}}</h1>
+      <p>{{isEditMode ? 'อัพเดทข้อมูลพนักงานในระบบ' : 'สร้างบัญชีพนักงานใหม่ในระบบ'}}</p>
     </div>
 
     <form class="staff-form" [formGroup]="staffForm" (ngSubmit)="onSubmit()">
-      <div class="form-row">
-<!--        <div class="photo-upload-section">-->
-<!--          <div class="photo-upload" (click)="triggerFileUpload()">-->
-<!--            <div class="upload-placeholder">-->
-<!--              <i class="fas fa-camera"></i>-->
-<!--              <p>Upload photo</p>-->
-<!--            </div>-->
-<!--            <input type="file" id="fileInput" accept="image/*" style="display: none" (change)="onFileSelected($event)">-->
-<!--          </div>-->
-<!--          <div class="upload-info">-->
-<!--            <p class="format-text">Allowed format</p>-->
-<!--            <p class="formats">JPG, JPEG, and PNG</p>-->
-<!--            <p class="size-text">Max file size</p>-->
-<!--            <p class="size">2MB</p>-->
-<!--          </div>-->
-<!--        </div>-->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-user"></i>
+          ข้อมูลส่วนตัว
+        </h3>
 
-        <div class="form-fields">
-          <div class="field-row">
-            <div class="form-group">
-              <label for="empName">Employee Name</label>
-              <input
-                id="empName"
-                formControlName="empName"
-                placeholder="Enter employee name"
-                class="form-control"
-                [class.error]="staffForm.get('empName')?.invalid && staffForm.get('empName')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('empName')?.invalid && staffForm.get('empName')?.touched">
-                Employee name is required and must be at least 2 characters
-              </div>
+        <div class="field-row">
+          <div class="form-group">
+            <label for="empName">
+              ชื่อพนักงาน <span class="required">*</span>
+            </label>
+            <input
+              id="empName"
+              formControlName="empName"
+              placeholder="กรอกชื่อพนักงาน"
+              class="form-control"
+              [class.error]="isFieldInvalid('empName')"
+              [class.success]="staffForm.get('empName')?.valid && staffForm.get('empName')?.touched">
+            <div class="error-message" *ngIf="isFieldInvalid('empName')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกชื่อพนักงานอย่างน้อย 2 ตัวอักษร
             </div>
-            <div class="form-group">
-              <label for="email">Email</label>
+          </div>
+
+          <div class="form-group">
+            <label for="empPhone">
+              เบอร์โทรศัพท์ <span class="required">*</span>
+            </label>
+            <input
+              id="empPhone"
+              formControlName="empPhone"
+              placeholder="กรอกเบอร์โทรศัพท์ (10-11 หลัก)"
+              class="form-control"
+              [class.error]="isFieldInvalid('empPhone')"
+              [class.success]="staffForm.get('empPhone')?.valid && staffForm.get('empPhone')?.touched">
+            <div class="error-message" *ngIf="isFieldInvalid('empPhone')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกเบอร์โทรศัพท์ 10-11 หลักที่ถูกต้อง
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="form-group full-width">
+            <label for="empAddress">
+              ที่อยู่ <span class="required">*</span>
+            </label>
+            <textarea
+              id="empAddress"
+              formControlName="empAddress"
+              placeholder="กรอกที่อยู่พนักงาน"
+              class="form-control textarea"
+              rows="3"
+              [class.error]="isFieldInvalid('empAddress')"
+              [class.success]="staffForm.get('empAddress')?.valid && staffForm.get('empAddress')?.touched">
+            </textarea>
+            <div class="error-message" *ngIf="isFieldInvalid('empAddress')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกที่อยู่อย่างน้อย 5 ตัวอักษร
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="form-group">
+            <label for="email">
+              อีเมล <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
               <input
                 id="email"
                 formControlName="email"
-                placeholder="Enter email address"
-                class="form-control"
-                [class.error]="staffForm.get('email')?.invalid && staffForm.get('email')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('email')?.invalid && staffForm.get('email')?.touched">
-                Please enter a valid email address
-              </div>
+                placeholder="กรอกอีเมล"
+                class="form-control with-icon"
+                [class.error]="isFieldInvalid('email')"
+                [class.success]="emailControl?.valid && emailControl?.touched"
+                [class.checking]="isFieldPending('email')">
+              <span class="validation-icon" *ngIf="emailControl?.valid && emailControl?.touched && !isFieldPending('email')">
+                <i class="fas fa-check-circle"></i>
+              </span>
+              <span class="validation-icon pending" *ngIf="isFieldPending('email')">
+                <i class="fas fa-spinner fa-spin"></i>
+              </span>
+            </div>
+            <div class="error-message" *ngIf="emailControl?.hasError('required') && emailControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกอีเมล
+            </div>
+            <div class="error-message" *ngIf="emailControl?.hasError('email') && emailControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              รูปแบบอีเมลไม่ถูกต้อง
+            </div>
+            <div class="error-message" *ngIf="emailControl?.hasError('emailTaken') && emailControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-briefcase"></i>
+          ข้อมูลการทำงาน
+        </h3>
+
+        <div class="field-row">
+          <div class="form-group">
+            <label for="empType">
+              ประเภทพนักงาน <span class="required">*</span>
+            </label>
+            <select
+              id="empType"
+              formControlName="empType"
+              class="form-control"
+              [class.error]="isFieldInvalid('empType')">
+              <option value="">เลือกประเภทพนักงาน</option>
+              <option value="DAILY">รายวัน</option>
+              <option value="MONTHLY">รายเดือน</option>
+            </select>
+            <div class="error-message" *ngIf="isFieldInvalid('empType')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณาเลือกประเภทพนักงาน
             </div>
           </div>
 
-          <div class="field-row">
-            <div class="form-group">
-              <label for="empAddress">Address</label>
-              <input
-                id="empAddress"
-                formControlName="empAddress"
-                placeholder="Enter employee address"
-                class="form-control"
-                [class.error]="staffForm.get('empAddress')?.invalid && staffForm.get('empAddress')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('empAddress')?.invalid && staffForm.get('empAddress')?.touched">
-                Address is required and must be at least 5 characters
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="empPhone">Phone Number</label>
-              <input
-                id="empPhone"
-                formControlName="empPhone"
-                placeholder="Enter phone number"
-                class="form-control"
-                [class.error]="staffForm.get('empPhone')?.invalid && staffForm.get('empPhone')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('empPhone')?.invalid && staffForm.get('empPhone')?.touched">
-                Please enter a valid phone number (10-11 digits)
-              </div>
+          <div class="form-group">
+            <label for="role">
+              ตำแหน่ง <span class="required">*</span>
+            </label>
+            <select
+              id="role"
+              formControlName="role"
+              class="form-control"
+              [class.error]="isFieldInvalid('role')">
+              <option value="">เลือกตำแหน่ง</option>
+              <option value="Admin">ผู้ดูแลระบบ</option>
+              <option value="Manager">ผู้จัดการ</option>
+              <option value="Operations">ฝ่ายปฏิบัติการ</option>
+            </select>
+            <div class="error-message" *ngIf="isFieldInvalid('role')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณาเลือกตำแหน่ง
             </div>
           </div>
+        </div>
 
-          <div class="field-row">
-            <div class="form-group">
-              <label for="empType">Employee Type</label>
-              <select
-                id="empType"
-                formControlName="empType"
-                class="form-control"
-                [class.error]="staffForm.get('empType')?.invalid && staffForm.get('empType')?.touched">
-                <option value="">Select employee type</option>
-                <option value="DAILY">Daily Worker</option>
-                <option value="MONTHLY">Monthly Worker</option>
-              </select>
-              <div class="error-message" *ngIf="staffForm.get('empType')?.invalid && staffForm.get('empType')?.touched">
-                Employee type is required
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="role">Role</label>
-              <select
-                id="role"
-                formControlName="role"
-                class="form-control"
-                [class.error]="staffForm.get('role')?.invalid && staffForm.get('role')?.touched">
-                <option value="">Select role</option>
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="Operations">Operations</option>
-              </select>
-              <div class="error-message" *ngIf="staffForm.get('role')?.invalid && staffForm.get('role')?.touched">
-                Role is required
-              </div>
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="form-group" *ngIf="staffForm.get('empType')?.value === 'DAILY'">
-              <label for="dailyWage">Daily Wage (฿)</label>
+        <div class="field-row">
+          <div class="form-group" *ngIf="staffForm.get('empType')?.value === 'DAILY'">
+            <label for="dailyWage">
+              ค่าแรงรายวัน (฿) <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-baht-sign input-icon"></i>
               <input
                 id="dailyWage"
                 formControlName="dailyWage"
-                placeholder="Enter daily wage amount"
-                class="form-control"
+                placeholder="กรอกค่าแรงรายวัน"
+                class="form-control with-icon"
                 type="number"
                 min="0"
                 step="0.01"
-                [class.error]="staffForm.get('dailyWage')?.invalid && staffForm.get('dailyWage')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('dailyWage')?.invalid && staffForm.get('dailyWage')?.touched">
-                Daily wage is required and must be greater than 0
-              </div>
+                [class.error]="isFieldInvalid('dailyWage')">
             </div>
-            <div class="form-group" *ngIf="staffForm.get('empType')?.value === 'MONTHLY'">
-              <label for="monthlySalary">Monthly Salary (฿)</label>
-              <input
-                id="monthlySalary"
-                formControlName="monthlySalary"
-                placeholder="Enter monthly salary amount"
-                class="form-control"
-                type="number"
-                min="0"
-                step="0.01"
-                [class.error]="staffForm.get('monthlySalary')?.invalid && staffForm.get('monthlySalary')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('monthlySalary')?.invalid && staffForm.get('monthlySalary')?.touched">
-                Monthly salary is required and must be greater than 0
-              </div>
+            <div class="error-message" *ngIf="isFieldInvalid('dailyWage')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกค่าแรงรายวันที่มากกว่า 0
             </div>
           </div>
 
-          <div class="field-row">
-            <div class="form-group">
-              <label for="username">Username</label>
+          <div class="form-group" *ngIf="staffForm.get('empType')?.value === 'MONTHLY'">
+            <label for="monthlySalary">
+              เงินเดือน (฿) <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-baht-sign input-icon"></i>
+              <input
+                id="monthlySalary"
+                formControlName="monthlySalary"
+                placeholder="กรอกเงินเดือน"
+                class="form-control with-icon"
+                type="number"
+                min="0"
+                step="0.01"
+                [class.error]="isFieldInvalid('monthlySalary')">
+            </div>
+            <div class="error-message" *ngIf="isFieldInvalid('monthlySalary')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกเงินเดือนที่มากกว่า 0
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="status">
+              สถานะ <span class="required">*</span>
+            </label>
+            <select
+              id="status"
+              formControlName="status"
+              class="form-control">
+              <option value="ACTIVE">ทำงานอยู่</option>
+              <option value="INACTIVE">พ้นสภาพ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-lock"></i>
+          ข้อมูลเข้าสู่ระบบ
+        </h3>
+
+        <div class="field-row">
+          <div class="form-group">
+            <label for="username">
+              ชื่อผู้ใช้ <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-user input-icon"></i>
               <input
                 id="username"
                 formControlName="username"
-                placeholder="Enter username"
-                class="form-control"
-                [class.error]="staffForm.get('username')?.invalid && staffForm.get('username')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('username')?.invalid && staffForm.get('username')?.touched">
-                Username is required and must be at least 3 characters
-              </div>
+                placeholder="กรอกชื่อผู้ใช้"
+                class="form-control with-icon"
+                [class.error]="isFieldInvalid('username')"
+                [class.success]="usernameControl?.valid && usernameControl?.touched"
+                [class.checking]="isFieldPending('username')">
+              <span class="validation-icon" *ngIf="usernameControl?.valid && usernameControl?.touched && !isFieldPending('username')">
+                <i class="fas fa-check-circle"></i>
+              </span>
+              <span class="validation-icon pending" *ngIf="isFieldPending('username')">
+                <i class="fas fa-spinner fa-spin"></i>
+              </span>
             </div>
-            <div class="form-group">
-              <label for="password">Password</label>
+            <div class="error-message" *ngIf="usernameControl?.hasError('required') && usernameControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกชื่อผู้ใช้
+            </div>
+            <div class="error-message" *ngIf="usernameControl?.hasError('minlength') && usernameControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร
+            </div>
+            <div class="error-message" *ngIf="usernameControl?.hasError('usernameTaken') && usernameControl?.touched">
+              <i class="fas fa-exclamation-circle"></i>
+              ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาใช้ชื่อผู้ใช้อื่น
+            </div>
+            <div class="help-text">
+              <button type="button" class="text-link" (click)="generateUsername()">
+                <i class="fas fa-magic"></i> สร้างชื่อผู้ใช้อัตโนมัติ
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              รหัสผ่าน <span class="required" *ngIf="!isEditMode">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-key input-icon"></i>
               <input
                 id="password"
                 formControlName="password"
-                placeholder="Enter password"
+                [placeholder]="isEditMode ? 'เว้นว่างไว้หากไม่ต้องการเปลี่ยน' : 'กรอกรหัสผ่าน'"
                 type="password"
-                class="form-control"
-                [class.error]="staffForm.get('password')?.invalid && staffForm.get('password')?.touched">
-              <div class="error-message" *ngIf="staffForm.get('password')?.invalid && staffForm.get('password')?.touched">
-                Password is required and must be at least 6 characters
-              </div>
+                class="form-control with-icon"
+                [class.error]="isFieldInvalid('password')">
             </div>
-          </div>
-          <div class="field-row">
-            <div class="form-group">
-              <label for="status">Status</label>
-              <select
-                id="status"
-                formControlName="status"
-                class="form-control"
-                [class.error]="staffForm.get('status')?.invalid && staffForm.get('status')?.touched">
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
-              <div class="error-message" *ngIf="staffForm.get('status')?.invalid && staffForm.get('status')?.touched">
-                Status is required
-              </div>
+            <div class="error-message" *ngIf="isFieldInvalid('password')">
+              <i class="fas fa-exclamation-circle"></i>
+              รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร
             </div>
-            <!-- ... other fields ... -->
+            <div class="help-text" *ngIf="isEditMode">
+              <i class="fas fa-info-circle"></i>
+              เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน
+            </div>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="back-btn" (click)="goBack()">
+        <button type="button" class="back-btn" (click)="goBack()" [disabled]="isSubmitting">
           <i class="fas fa-arrow-left"></i>
-          Back
+          ย้อนกลับ
         </button>
-        <button type="submit" class="submit-btn" [disabled]="staffForm.invalid">
-          <i class="fas fa-plus"></i>
-          {{isEditMode ? 'Update Employee' : 'Add Employee'}}
+        <button type="submit" class="submit-btn" [disabled]="staffForm.invalid || isSubmitting || staffForm.pending">
+          <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+          <i class="fas fa-save" *ngIf="!isSubmitting"></i>
+          {{isSubmitting ? 'กำลังบันทึก...' : (isEditMode ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มพนักงาน')}}
         </button>
       </div>
     </form>

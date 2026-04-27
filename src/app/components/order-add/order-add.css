@@ -437,3 +437,150 @@ textarea.form-control {
     justify-content: center;
   }
 }
+/* =============================================
+   ⭐ VAT Section Styles - เพิ่มต่อท้ายไฟล์ order-add.css เดิม
+   ============================================= */
+
+/* VAT Group Container */
+.vat-group {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.vat-group:has(input[type="checkbox"]:checked) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* Checkbox Row */
+.vat-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #374151;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.95rem;
+}
+
+.checkbox-text i {
+  color: #3b82f6;
+  font-size: 0.9rem;
+}
+
+.vat-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+/* VAT Rate Input Area */
+.vat-rate-wrapper {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #bfdbfe;
+}
+
+.vat-rate-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.vat-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  max-width: 160px;
+}
+
+.vat-input-group .vat-input {
+  border-radius: 8px 0 0 8px !important;
+  border-right: none !important;
+  text-align: right;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.vat-input-group .vat-input:focus {
+  z-index: 1;
+  position: relative;
+}
+
+.vat-suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1.5px solid #3b82f6;
+  border-radius: 0 8px 8px 0;
+  height: 42px;
+  flex-shrink: 0;
+}
+
+/* Summary - VAT Row */
+.summary-row.vat-row {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.summary-row .value.vat {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* Summary Divider */
+.summary-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 8px 0;
+}
+
+/* VAT Included Badge */
+.vat-included-badge {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vat-included-badge i {
+  color: #10b981;
+  font-size: 0.85rem;
+}

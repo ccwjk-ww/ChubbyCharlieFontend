@@ -1,15 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms'; // ⭐ เพิ่ม
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { OrderService, Order } from '../../services/order.service';
 import { TransactionService } from "../../services/transaction.service";
 import { StockCheckModalComponent } from '../stock-check-modal/stock-check-modal';
+import {PaymentDateModalComponent} from '../payment-date-modal/payment-date-modal';
+import { TaxInvoiceModalComponent } from '../tax-invoice-modal/tax-invoice-modal';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, MatDialogModule],
+  imports: [CommonModule, MatDialogModule , FormsModule],
   templateUrl: './order-detail.html',
   styleUrls: ['./order-detail.css']
 })
@@ -36,6 +39,15 @@ export class OrderDetailComponent implements OnInit {
       this.loadOrder();
       this.loadStockDeductionStatus(); // ⭐ โหลดสถานะการตัด Stock
     }
+  }
+
+  openTaxInvoice(): void {
+    this.dialog.open(TaxInvoiceModalComponent, {
+      width: '95vw', maxWidth: '1400px',
+      height: '95vh', maxHeight: '95vh',
+      data: { order: this.order! },
+      panelClass: 'tax-invoice-dialog-panel'
+    });
   }
 
   loadOrder(): void {
@@ -235,12 +247,12 @@ export class OrderDetailComponent implements OnInit {
     // Confirmation dialog พร้อมคำเตือน
     const confirmMessage = `⚠️ ยืนยันการคืน Stock สำหรับ Order ${this.order?.orderNumber}?
 
-การคืน Stock จะทำให้:
-✓ Stock ที่ตัดไปจะถูกเพิ่มกลับเข้าคลัง
-✓ สถานะการตัด Stock จะเปลี่ยนเป็น PENDING
-✓ คุณสามารถตัด Stock ใหม่ได้อีกครั้ง
+      การคืน Stock จะทำให้:
+      ✓ Stock ที่ตัดไปจะถูกเพิ่มกลับเข้าคลัง
+      ✓ สถานะการตัด Stock จะเปลี่ยนเป็น PENDING
+      ✓ คุณสามารถตัด Stock ใหม่ได้อีกครั้ง
 
-⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้`;
+      ⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้`;
 
     if (!confirm(confirmMessage)) {
       return;
@@ -284,33 +296,102 @@ export class OrderDetailComponent implements OnInit {
       });
     }
   }
+  /**
+   * ⭐ NEW: เปิด Modal เลือกวันที่ชำระเงิน
+   */
+  openPaymentDateModal(newStatus: string): void {
+    const dialogRef = this.dialog.open(PaymentDateModalComponent, {
+      width: '500px',
+      data: {
+        orderNumber: this.order?.orderNumber,
+        netAmount: this.order?.netAmount,
+        currentPaymentDate: this.order?.paymentDate
+      },
+      disableClose: true
+    });
 
-  updatePaymentStatus(newStatus: string): void {
-    const previousStatus = this.order?.paymentStatus;
-
-    if (confirm(`ต้องการเปลี่ยนสถานะการชำระเงินเป็น ${newStatus}?`)) {
-      this.orderService.updatePaymentStatus(this.orderId!, newStatus).subscribe({
-        next: (updatedOrder) => {
-          this.order = updatedOrder;
-          alert('เปลี่ยนสถานะการชำระเงินสำเร็จ');
-
-          if (newStatus === 'PAID' && previousStatus !== 'PAID') {
-            setTimeout(() => {
-              alert('✅ Transaction รายรับถูกสร้างอัตโนมัติแล้ว');
-            }, 500);
-          }
-
-          this.loadOrder();
-        },
-        error: (error) => {
-          console.error('Error updating payment status:', error);
-          const errorMessage = error.error?.message || error.message || 'เกิดข้อผิดพลาด';
-          alert('ไม่สามารถเปลี่ยนสถานะได้: ' + errorMessage);
-        }
-      });
-    }
+    dialogRef.afterClosed().subscribe((result: { confirmed: boolean, paymentDate?: Date }) => {
+      if (result && result.confirmed) {
+        this.confirmPaymentWithDate(newStatus, result.paymentDate);
+      }
+    });
   }
 
+  /**
+   * ⭐ NEW: ยืนยันการชำระเงินพร้อมวันที่
+   */
+  private confirmPaymentWithDate(newStatus: string, paymentDate?: Date): void {
+    if (!this.orderId) return;
+
+    this.orderService.updatePaymentStatus(this.orderId, newStatus, paymentDate).subscribe({
+      next: (updatedOrder) => {
+        this.order = updatedOrder;
+
+        const dateStr = paymentDate
+          ? this.formatDate(paymentDate)
+          : 'วันที่ปัจจุบัน';
+
+        alert(`✅ เปลี่ยนสถานะการชำระเงินสำเร็จ\n\nวันที่ชำระเงิน: ${dateStr}\n\n💰 Transaction รายรับถูกสร้างอัตโนมัติแล้ว`);
+
+        this.loadOrder();
+      },
+      error: (error) => {
+        console.error('Error updating payment status:', error);
+        const errorMessage = error.error?.message || error.message || 'เกิดข้อผิดพลาด';
+        alert('ไม่สามารถเปลี่ยนสถานะได้: ' + errorMessage);
+      }
+    });
+  }
+  // updatePaymentStatus(newStatus: string): void {
+  //   const previousStatus = this.order?.paymentStatus;
+  //
+  //   if (confirm(`ต้องการเปลี่ยนสถานะการชำระเงินเป็น ${newStatus}?`)) {
+  //     this.orderService.updatePaymentStatus(this.orderId!, newStatus).subscribe({
+  //       next: (updatedOrder) => {
+  //         this.order = updatedOrder;
+  //         alert('เปลี่ยนสถานะการชำระเงินสำเร็จ');
+  //
+  //         if (newStatus === 'PAID' && previousStatus !== 'PAID') {
+  //           setTimeout(() => {
+  //             alert('✅ Transaction รายรับถูกสร้างอัตโนมัติแล้ว');
+  //           }, 500);
+  //         }
+  //
+  //         this.loadOrder();
+  //       },
+  //       error: (error) => {
+  //         console.error('Error updating payment status:', error);
+  //         const errorMessage = error.error?.message || error.message || 'เกิดข้อผิดพลาด';
+  //         alert('ไม่สามารถเปลี่ยนสถานะได้: ' + errorMessage);
+  //       }
+  //     });
+  //   }
+  // }
+  /**
+   * ⭐ UPDATED: Method เดิม - เรียก Modal แทนการยืนยันตรงๆ
+   */
+  updatePaymentStatus(newStatus: string): void {
+    if (newStatus === 'PAID') {
+      // เปิด Modal เลือกวันที่
+      this.openPaymentDateModal(newStatus);
+    } else {
+      // สถานะอื่นๆ (UNPAID, REFUNDED) ไม่ต้องเลือกวันที่
+      if (confirm(`ต้องการเปลี่ยนสถานะการชำระเงินเป็น ${newStatus}?`)) {
+        this.orderService.updatePaymentStatus(this.orderId!, newStatus).subscribe({
+          next: (updatedOrder) => {
+            this.order = updatedOrder;
+            alert('เปลี่ยนสถานะการชำระเงินสำเร็จ');
+            this.loadOrder();
+          },
+          error: (error) => {
+            console.error('Error updating payment status:', error);
+            const errorMessage = error.error?.message || error.message || 'เกิดข้อผิดพลาด';
+            alert('ไม่สามารถเปลี่ยนสถานะได้: ' + errorMessage);
+          }
+        });
+      }
+    }
+  }
   cancelOrder(): void {
     if (confirm('ต้องการยกเลิกออเดอร์นี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
       this.orderService.cancelOrder(this.orderId!).subscribe({

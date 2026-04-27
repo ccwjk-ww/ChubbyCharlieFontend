@@ -1,44 +1,45 @@
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {Injectable} from '@angular/core';
-
-export interface StockLotSummary {
-  stockLotId: number;
-  chinaTotalValue: number;
-  chinaItemCount: number;
-  chinaTotalQuantity: number;
-  thaiTotalValue: number;
-  thaiItemCount: number;
-  thaiTotalQuantity: number;
-  grandTotalValue: number; // ⭐ Grand Total (รวม Buffer)
-  totalItemCount: number;
-  totalQuantity: number;
-}
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface SystemSummary {
   totalLots: number;
+  totalItems: number;
   totalChinaItems: number;
   totalThaiItems: number;
-  totalItems: number;
-  activeChinaItems: number;
-  activeThaiItems: number;
   activeItems: number;
-  totalInventoryValue?: number; // ⭐ เพิ่ม Total Inventory Value (optional)
+  totalInventoryValue: number;
+}
+
+export interface StockLotSummary {
+  stockLotId: number;
+  lotName: string;
+  totalItemCount: number;
+  chinaItemCount: number;
+  thaiItemCount: number;
+
+  // ⭐ VAT breakdown — เหมือนกับ stock-lot-detail component
+  totalCostBeforeVat: number;   // ยอดรวมก่อน VAT
+  totalVatAmount: number;       // VAT รวมทั้ง Lot
+  totalCostWithVat: number;     // ยอดรวมหลัง VAT ← ใช้แสดงใน Dashboard
+
+  // backward compat (grandTotalValue = totalCostWithVat)
+  grandTotalValue?: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class StockSummaryService {
-  private apiUrl = 'https://www.chubbycharlieshop.com/api/summary';
+  private apiUrl = 'https://www.chubbycharlieshop.com/api/stock-lots';
 
   constructor(private http: HttpClient) {}
 
-  getStockLotSummary(stockLotId: number): Observable<StockLotSummary> {
-    return this.http.get<StockLotSummary>(`${this.apiUrl}/lot/${stockLotId}`);
+  getSystemSummary(): Observable<SystemSummary> {
+    return this.http.get<SystemSummary>(`${this.apiUrl}/system-summary`);
   }
 
-  getSystemSummary(): Observable<SystemSummary> {
-    return this.http.get<SystemSummary>(`${this.apiUrl}/system`);
+  getStockLotSummary(stockLotId: number): Observable<StockLotSummary> {
+    return this.http.get<StockLotSummary>(`${this.apiUrl}/${stockLotId}/summary`);
   }
 }

@@ -8,6 +8,9 @@
   </div>
 
   <form (ngSubmit)="onSubmit()" class="order-form">
+    <!-- ==============================
+         ข้อมูลออเดอร์
+    =============================== -->
     <div class="form-section">
       <div class="section-header">
         <i class="bi-info-circle"></i>
@@ -56,6 +59,9 @@
       </div>
     </div>
 
+    <!-- ==============================
+         ข้อมูลลูกค้า
+    =============================== -->
     <div class="form-section">
       <div class="section-header">
         <i class="bi-person"></i>
@@ -96,6 +102,9 @@
       </div>
     </div>
 
+    <!-- ==============================
+         รายการสินค้า
+    =============================== -->
     <div class="form-section">
       <div class="section-header">
         <i class="bi-box-seam"></i>
@@ -218,6 +227,9 @@
       </div>
     </div>
 
+    <!-- ==============================
+         สรุปยอดชำระ
+    =============================== -->
     <div class="form-section">
       <div class="section-header">
         <i class="bi-calculator"></i>
@@ -225,6 +237,7 @@
       </div>
 
       <div class="summary-container">
+        <!-- Left: inputs -->
         <div class="summary-left">
           <div class="form-group">
             <label>ค่าจัดส่ง</label>
@@ -250,6 +263,44 @@
               min="0">
           </div>
 
+          <!-- ⭐ VAT Section -->
+          <div class="form-group vat-group">
+            <div class="vat-checkbox-row">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="vatEnabled"
+                  name="vatEnabled"
+                  (change)="onVatToggle()">
+                <span class="checkbox-text">
+                  <i class="bi-percent"></i> เพิ่ม VAT
+                </span>
+              </label>
+              <span class="vat-hint" *ngIf="!vatEnabled">
+                (ไม่รวม VAT)
+              </span>
+            </div>
+
+            <div class="vat-rate-wrapper" *ngIf="vatEnabled">
+              <label class="vat-rate-label">อัตรา VAT</label>
+              <div class="vat-input-group">
+                <input
+                  type="number"
+                  class="form-control vat-input"
+                  [(ngModel)]="vatRate"
+                  name="vatRate"
+                  (input)="calculateTotals()"
+                  step="0.01"
+                  min="0.01"
+                  max="100"
+                  placeholder="7">
+                <span class="vat-suffix">%</span>
+              </div>
+              <small class="form-hint">ปกติ VAT ในไทย = 7%</small>
+            </div>
+          </div>
+          <!-- ⭐ END VAT Section -->
+
           <div class="form-group full-width">
             <label>หมายเหตุ</label>
             <textarea
@@ -261,6 +312,7 @@
           </div>
         </div>
 
+        <!-- Right: summary -->
         <div class="summary-right">
           <div class="summary-row">
             <span class="label">ยอดรวมสินค้า:</span>
@@ -274,14 +326,32 @@
             <span class="label">ส่วนลด:</span>
             <span class="value discount">-{{formatCurrency(discount)}}</span>
           </div>
+
+          <!-- ⭐ แสดงแถว VAT เฉพาะเมื่อเปิดใช้งาน -->
+          <div class="summary-row vat-row" *ngIf="vatEnabled">
+            <span class="label">VAT ({{vatRate || 0}}%):</span>
+            <span class="value vat">+{{formatCurrency(vatAmount)}}</span>
+          </div>
+
+          <div class="summary-divider"></div>
+
           <div class="summary-row total">
             <span class="label">ยอดสุทธิ:</span>
             <span class="value">{{formatCurrency(netAmount)}}</span>
+          </div>
+
+          <!-- ⭐ Badge แสดงว่ารวม VAT แล้ว -->
+          <div class="vat-included-badge" *ngIf="vatEnabled && vatAmount > 0">
+            <i class="bi-check-circle-fill"></i>
+            รวม VAT {{vatRate}}% ({{formatCurrency(vatAmount)}}) แล้ว
           </div>
         </div>
       </div>
     </div>
 
+    <!-- ==============================
+         Buttons
+    =============================== -->
     <div class="form-actions">
       <button type="button" class="btn-cancel" (click)="goBack()">
         <i class="bi-x-circle"></i> ยกเลิก

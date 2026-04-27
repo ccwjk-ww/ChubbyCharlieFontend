@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map, catchError, of } from 'rxjs';
+import { HttpClient, HttpParams} from '@angular/common/http';
+import { Observable, forkJoin, map, catchError, of , combineLatest} from 'rxjs';
 
 interface DashboardSummary {
   totalOrders: number;
@@ -63,8 +63,46 @@ export class DashboardService {
     return this.http.get<any[]>(`${this.apiUrl}/orders`)
       .pipe(catchError(() => of([])));
   }
-  getMonthlyTransactions(months: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/transactions/monthly?months=${months}`);
+
+//   getMonthlyTransactions(months: number): Observable<any[]> {
+//     return this.http.get<any[]>(`${this.apiUrl}/transactions/monthly?months=${months}`);
+//   }
+
+  getMonthlyTransaction(year: number, month: number): Observable<any> {
+    const params = new HttpParams()
+      .set('year', year.toString())
+      .set('month', month.toString());
+
+    return this.http.get<any>(`${this.apiUrl}/transactions/reports/monthly`, { params });
+  }
+  //summary 6 month
+//   getLastSixMonthsTransactions(): Observable<any[]> {
+//     const now = new Date();
+//     const requests: Observable<any>[] = [];
+//
+//     for (let i = 5; i >= 0; i--) {
+//       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+//       const year = date.getFullYear();
+//       const month = date.getMonth() + 1;
+//       requests.push(this.getMonthlyTransaction(year, month));
+//     }
+//
+//     return combineLatest(requests);
+//   }
+
+  //1 year
+  getLastTwelveMonthsTransactions(): Observable<any[]> {
+    const now = new Date();
+    const requests: Observable<any>[] = [];
+
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      requests.push(this.getMonthlyTransaction(year, month));
+    }
+
+    return combineLatest(requests);
   }
 
   getOrdersByStatus(status: string): Observable<any[]> {

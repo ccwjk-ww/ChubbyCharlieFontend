@@ -1,9 +1,7 @@
 <div class="thai-stock-container">
   <div class="thai-stock-header">
     <div class="thai-stock-header-top">
-      <div class="thai-stock-icon">
-        <i class="bi-house-fill"></i>
-      </div>
+      <div class="thai-stock-icon"><i class="bi-house-fill"></i></div>
       <div class="thai-stock-title">
         <h1>Thai Stock Inventory</h1>
         <p class="thai-stock-subtitle">Manage local products and inventory from Thailand</p>
@@ -14,20 +12,14 @@
       <div class="thai-stock-controls-left">
         <div class="search-container">
           <i class="bi-search search-icon"></i>
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Search by product name or shop URL..."
-            [(ngModel)]="searchTerm"
-            (input)="onSearch()"
-          />
+          <input type="text" class="search-input" placeholder="Search by product name or shop URL..."
+                 [(ngModel)]="searchTerm" (input)="onSearch()" />
         </div>
         <div class="stats-card">
           <div class="stats-number">{{totalThaiStocks}}</div>
           <div class="stats-label">Total Thai Items</div>
         </div>
       </div>
-
       <div class="thai-stock-controls-right">
         <div class="filter-section">
           <select class="filter-select" [(ngModel)]="selectedLot" (change)="onFilterChange()">
@@ -42,8 +34,7 @@
           </select>
         </div>
         <button class="add-thai-stock-btn" (click)="openAddThaiStockModal()">
-          <i class="bi-plus"></i>
-          Add Thai Stock
+          <i class="bi-plus"></i> Add Thai Stock
         </button>
       </div>
     </div>
@@ -66,6 +57,11 @@
           <th class="col-price-total">Total (฿)</th>
           <th class="col-price-unit">Price/Unit (฿)</th>
           <th class="col-price-unit-shipping">Final Price/Unit (฿)</th>
+          <th class="col-vat-amount">VAT Amount (฿)</th>
+          <th class="col-price-total-vat">Total (฿) + VAT</th>
+          <th class="col-price-unit-vat">Final/Unit (฿) + VAT</th>
+          <th class="col-defective-qty">ของเสีย (ชิ้น)</th>
+          <th class="col-defective-value">มูลค่าของเสีย (฿)</th>
           <th class="col-status">Status</th>
           <th class="col-action">Action</th>
         </tr>
@@ -77,14 +73,14 @@
             <div class="product-info">
               <span class="product-name">{{stock.name}}</span>
               <small class="shop-url" *ngIf="stock.shopURL">{{stock.shopURL}}</small>
+              <small class="vat-badge" *ngIf="hasVat(stock)">VAT {{stock.vatPercentage}}%</small>
             </div>
           </td>
           <td class="col-lot">{{getLotName(stock)}}</td>
 
-          <!-- ⭐ Quantity Details - แก้ไข Safe Navigation -->
+          <!-- ⭐ Quantity Details — เพิ่มแถบของเสีย -->
           <td class="col-quantity-detail">
             <div class="quantity-details-container">
-              <!-- Row 1: จำนวนคงเหลือ / ทั้งหมด -->
               <div class="quantity-main">
                 <span class="qty-remaining"
                       [ngClass]="stock.remainingPercentage != null ? thaiStockService.getRemainingColor(stock.remainingPercentage) : 'text-muted'">
@@ -96,8 +92,6 @@
                   {{stock.originalQuantity || stock.currentQuantity || stock.quantity || 0}}
                 </span>
               </div>
-
-              <!-- Row 2: Labels + Progress Bar (แสดงเฉพาะเมื่อมีข้อมูล) -->
               <div class="quantity-info-row" *ngIf="stock.remainingPercentage != null">
                 <div class="quantity-labels">
                   <span class="label-item">
@@ -113,26 +107,63 @@
                     <small>ใช้ไป: {{stock.usedQuantity || 0}}</small>
                   </span>
                 </div>
-
-                <!-- Progress Bar -->
                 <div class="quantity-progress">
-                  <div
-                    class="quantity-progress-bar"
-                    [ngClass]="{
-                      'bg-success': stock.remainingPercentage >= 70,
-                      'bg-warning': stock.remainingPercentage >= 30 && stock.remainingPercentage < 70,
-                      'bg-danger': stock.remainingPercentage < 30
-                    }"
-                    [style.width.%]="stock.remainingPercentage">
-                  </div>
+                  <div class="quantity-progress-bar" [ngClass]="{
+                    'bg-success': stock.remainingPercentage >= 70,
+                    'bg-warning': stock.remainingPercentage >= 30 && stock.remainingPercentage < 70,
+                    'bg-danger': stock.remainingPercentage < 30
+                  }" [style.width.%]="stock.remainingPercentage"></div>
                 </div>
               </div>
+
+              <!-- ⭐ NEW: แถบของเสีย (แสดงเฉพาะเมื่อมีของเสีย) -->
+              <div class="defective-qty-row" *ngIf="hasDefective(stock)">
+                <div class="defective-qty-labels">
+                  <span class="defective-badge-inline">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ของเสีย: {{stock.defectiveQuantity}} ชิ้น ({{getDefectivePercentage(stock)}}%)
+                  </span>
+                </div>
+                <div class="quantity-progress">
+                  <div class="quantity-progress-bar bg-defective"
+                       [style.width.%]="getDefectivePercentage(stock)"></div>
+                </div>
+              </div>
+
             </div>
           </td>
 
-          <td class="col-price-total">{{formatCurrency(calculateGrandTotal(stock))}}</td>
+          <td class="col-price-total">{{formatCurrency(calculateTotalCost(stock))}}</td>
           <td class="col-price-unit">{{formatCurrency(stock.pricePerUnit)}}</td>
           <td class="col-price-unit-shipping">{{formatCurrency(stock.pricePerUnitWithShipping)}}</td>
+
+          <td class="col-vat-amount">
+            <span *ngIf="hasVat(stock)" class="vat-amount-text">{{formatCurrency(calculateVatAmount(stock))}}</span>
+            <span *ngIf="!hasVat(stock)" class="text-muted">-</span>
+          </td>
+          <td class="col-price-total-vat">
+            <span *ngIf="hasVat(stock)" class="price-with-vat">{{formatCurrency(calculateGrandTotal(stock))}}</span>
+            <span *ngIf="!hasVat(stock)" class="text-muted">-</span>
+          </td>
+          <td class="col-price-unit-vat">
+            <span *ngIf="hasVat(stock)" class="price-with-vat">{{formatCurrency(calculateFinalPriceWithVat(stock))}}</span>
+            <span *ngIf="!hasVat(stock)" class="text-muted">-</span>
+          </td>
+
+          <td class="col-defective-qty">
+            <span *ngIf="hasDefective(stock)" class="defective-qty-badge">
+              <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+              {{stock.defectiveQuantity}} ชิ้น
+            </span>
+            <span *ngIf="!hasDefective(stock)" class="text-muted">-</span>
+          </td>
+          <td class="col-defective-value">
+            <span *ngIf="hasDefective(stock)" class="defective-value-text text-danger">
+              {{formatCurrency(getDefectiveValue(stock))}}
+            </span>
+            <span *ngIf="!hasDefective(stock)" class="text-muted">-</span>
+          </td>
+
           <td class="col-status">
             <span [class]="getStatusClass(stock.status)">{{stock.status || 'N/A'}}</span>
           </td>
@@ -148,7 +179,18 @@
                   </button>
                 </li>
                 <li>
-                  <button class="dropdown-item" (click)="updateThaiStockStatus(stock, stock.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
+                  <button class="dropdown-item defective-item" (click)="openDefectiveModal(stock)">
+                    <i class="bi bi-exclamation-triangle"></i> บันทึกของเสีย
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item" (click)="openDocModal(stock)">
+                    <i class="bi bi-paperclip"></i> เอกสารแนบ
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item"
+                          (click)="updateThaiStockStatus(stock, stock.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
                     <i class="bi-toggle-on" *ngIf="stock.status === 'ACTIVE'"></i>
                     <i class="bi-toggle-off" *ngIf="stock.status !== 'ACTIVE'"></i>
                     {{stock.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}}
@@ -164,7 +206,7 @@
           </td>
         </tr>
         <tr *ngIf="filteredThaiStocks.length === 0 && !loading">
-          <td colspan="9" class="empty-state">
+          <td colspan="14" class="empty-state">
             <i class="bi-house-fill"></i>
             <p>No Thai stock items found</p>
           </td>
@@ -177,17 +219,114 @@
       <nav>
         <ul class="pagination">
           <li class="page-item" [class.disabled]="currentPage === 1">
-            <a class="page-link" (click)="goToPage(currentPage - 1)" [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
+            <a class="page-link" (click)="goToPage(currentPage - 1)"
+               [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
               <i class="bi-chevron-left"></i>
             </a>
           </li>
           <li class="page-item" [class.disabled]="currentPage === totalPages">
-            <a class="page-link" (click)="goToPage(currentPage + 1)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
+            <a class="page-link" (click)="goToPage(currentPage + 1)"
+               [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
               <i class="bi-chevron-right"></i>
             </a>
           </li>
         </ul>
       </nav>
+    </div>
+  </div>
+</div>
+
+<!-- ⭐ Defective Modal -->
+<div class="modal-overlay" *ngIf="showDefectiveModal" (click)="closeDefectiveModal()">
+  <div class="modal-box defective-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="bi bi-exclamation-triangle-fill text-warning"></i> บันทึกของเสีย</h3>
+      <button class="modal-close-btn" (click)="closeDefectiveModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="defectiveModalStock">
+      <div class="defective-stock-info">
+        <p class="defective-product-name">{{defectiveModalStock.name}}</p>
+        <div class="defective-current-info">
+          <span class="info-item">
+            <label>คงเหลือปัจจุบัน:</label>
+            <strong>{{defectiveModalStock.currentQuantity || defectiveModalStock.quantity || 0}} ชิ้น</strong>
+          </span>
+          <span class="info-item">
+            <label>ของเสียสะสม:</label>
+            <strong class="text-warning">{{defectiveModalStock.defectiveQuantity || 0}} ชิ้น</strong>
+          </span>
+          <!-- ⭐ แสดงราคาที่ใช้คำนวณ พร้อมบอกว่ารวม VAT หรือไม่ -->
+          <span class="info-item">
+            <label>ราคาต้นทุน/ชิ้น:</label>
+            <strong>
+              {{formatCurrency(getDefectiveUnitPrice(defectiveModalStock))}}
+              <small class="vat-note" *ngIf="hasVat(defectiveModalStock)">(รวม VAT {{defectiveModalStock.vatPercentage}}%)</small>
+              <small class="no-vat-note" *ngIf="!hasVat(defectiveModalStock)">(ยังไม่รวม VAT)</small>
+            </strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="defective-input-group">
+        <label for="defectiveCountThai">จำนวนของเสียที่ต้องการบันทึกเพิ่ม</label>
+        <input
+          id="defectiveCountThai"
+          type="number"
+          class="form-control defective-input"
+          [(ngModel)]="defectiveCount"
+          min="1"
+          step="1"
+          placeholder="ระบุจำนวน">
+      </div>
+
+      <!-- ⭐ Preview ใช้ getDefectivePreviewValue / getDefectiveTotalPreview -->
+      <div class="defective-preview" *ngIf="defectiveCount > 0">
+        <div class="preview-row">
+          <span>มูลค่าที่จะบันทึกเป็นของเสียครั้งนี้:</span>
+          <strong class="text-danger">
+            {{formatCurrency(getDefectivePreviewValue(defectiveModalStock, defectiveCount))}}
+          </strong>
+        </div>
+        <div class="preview-row total-row">
+          <span>มูลค่าของเสียสะสมทั้งหมด:</span>
+          <strong class="text-danger">
+            {{formatCurrency(getDefectiveTotalPreview(defectiveModalStock, defectiveCount))}}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDefectiveModal()" [disabled]="defectiveLoading">
+        ยกเลิก
+      </button>
+      <button class="btn-confirm-defective" (click)="confirmDefective()"
+              [disabled]="defectiveLoading || defectiveCount <= 0">
+        <span *ngIf="!defectiveLoading"><i class="bi bi-check-circle"></i> บันทึกของเสีย</span>
+        <span *ngIf="defectiveLoading"><i class="bi bi-hourglass-split"></i> กำลังบันทึก...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ⭐ Document Modal -->
+<div class="modal-overlay" *ngIf="showDocModal" (click)="closeDocModal()">
+  <div class="modal-box doc-view-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="bi bi-paperclip text-warning"></i> เอกสารแนบ — {{docModalStock?.name}}</h3>
+      <button class="modal-close-btn" (click)="closeDocModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" *ngIf="docModalStock?.stockItemId">
+      <app-stock-document-widget
+        [stockItemId]="docModalStock!.stockItemId!"
+        theme="theme-orange">
+      </app-stock-document-widget>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeDocModal()">ปิด</button>
     </div>
   </div>
 </div>

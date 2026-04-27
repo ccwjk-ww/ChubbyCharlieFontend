@@ -40,22 +40,39 @@
     <div class="items-card">
       <div class="card-header">
         <h3>รายการสินค้า ({{stockLot.items?.length || 0}} รายการ)</h3>
-        <div class="add-items-buttons">
-        </div>
       </div>
 
       <div class="items-list" *ngIf="stockLot.items && stockLot.items.length > 0">
         <div class="item" *ngFor="let item of stockLot.items; let i = index">
           <div class="item-number">{{i + 1}}</div>
+
           <div class="item-details">
-            <div class="item-name">{{item.productName || item.name || 'ไม่มีชื่อ'}}</div>
+            <div class="item-name">
+              {{item.productName || item.name || 'ไม่มีชื่อ'}}
+              <!-- VAT badge -->
+              <span class="item-vat-badge" *ngIf="itemHasVat(item)">
+                VAT {{item.vatPercentage}}%
+              </span>
+            </div>
             <div class="item-info">
               <span *ngIf="item.quantity">จำนวน: {{item.quantity}}</span>
-              <span *ngIf="getItemUnitPrice(item)">ราคา/หน่วย: {{formatCurrency(getItemUnitPrice(item))}}</span>
+              <span *ngIf="getItemUnitPrice(item) > 0">
+                ราคา/หน่วย: {{formatCurrency(getItemUnitPrice(item))}}
+              </span>
+              <!-- ⭐ แสดงก่อน VAT + VAT amount เมื่อ item มี VAT -->
+              <span class="item-before-vat-info" *ngIf="itemHasVat(item)">
+                ก่อน VAT: {{formatCurrency(getItemAmountBeforeVatDisplay(item))}}
+              </span>
+              <span class="item-vat-info" *ngIf="itemHasVat(item)">
+                VAT: +{{formatCurrency(getItemVatDisplay(item))}}
+              </span>
             </div>
           </div>
+
+          <!-- ⭐ ยอดขวามือ: รวม VAT ถ้ามี, ปกติถ้าไม่มี -->
           <div class="item-cost">
-            {{formatCurrency(getItemTotalCost(item))}}
+            <span class="item-total">{{formatCurrency(getItemTotalCost(item))}}</span>
+            <span class="item-vat-note" *ngIf="itemHasVat(item)">รวม VAT</span>
           </div>
         </div>
       </div>
@@ -81,9 +98,29 @@
           <span class="label">จำนวนสินค้าทั้งหมด:</span>
           <span class="value">{{stockLot.items.length}} รายการ</span>
         </div>
+
+        <!-- ยอดก่อน VAT -->
+        <div class="summary-row">
+          <span class="label">ยอดรวมก่อน VAT:</span>
+          <span class="value">{{formatCurrency(totalCostBeforeVat)}}</span>
+        </div>
+
+        <!-- ⭐ VAT รวมทั้ง Lot (แสดงเฉพาะเมื่อมี) -->
+        <div class="summary-row vat-row" *ngIf="lotHasAnyVat">
+          <span class="label">
+            <i class="bi bi-receipt"></i>
+            VAT รวมทั้ง Lot:
+          </span>
+          <span class="value vat-value">+ {{formatCurrency(totalVatAmount)}}</span>
+        </div>
+
+        <!-- เส้นแบ่ง -->
+        <div class="summary-divider" *ngIf="lotHasAnyVat"></div>
+
+        <!-- ยอดรวมสุทธิ -->
         <div class="summary-row total">
-          <span class="label">ยอดรวมทั้งหมด:</span>
-          <span class="value">{{formatCurrency(totalCost)}}</span>
+          <span class="label">ยอดรวมทั้งหมด{{lotHasAnyVat ? ' (รวม VAT)' : ''}}:</span>
+          <span class="value">{{formatCurrency(totalCostWithVat)}}</span>
         </div>
       </div>
     </div>
@@ -93,66 +130,31 @@
       <h3>การดำเนินการ</h3>
 
       <div class="actions-grid">
-        <!-- เพิ่มสินค้าจากจีน -->
-        <button
-          class="action-btn china"
-          (click)="addChinaStock()"
-          [disabled]="stockLot.status === 'COMPLETED'">
-          <i class="bi bi-geo-alt-fill"></i>
-          เพิ่มสินค้าจากจีน
+        <button class="action-btn china" (click)="addChinaStock()" [disabled]="stockLot.status === 'COMPLETED'">
+          <i class="bi bi-geo-alt-fill"></i> เพิ่มสินค้าจากจีน
         </button>
-
-        <!-- เพิ่มสินค้าจากไทย -->
-        <button
-          class="action-btn thai"
-          (click)="addThaiStock()"
-          [disabled]="stockLot.status === 'COMPLETED'">
-          <i class="bi bi-house-fill"></i>
-          เพิ่มสินค้าจากไทย
+        <button class="action-btn thai" (click)="addThaiStock()" [disabled]="stockLot.status === 'COMPLETED'">
+          <i class="bi bi-house-fill"></i> เพิ่มสินค้าจากไทย
         </button>
-        <!-- แก้ไข -->
-        <button
-          class="action-btn primary"
-          (click)="editStockLot()"
-          [disabled]="stockLot.status === 'COMPLETED'">
-          <i class="bi bi-pencil"></i>
-          แก้ไข Stock Lot
+        <button class="action-btn primary" (click)="editStockLot()" [disabled]="stockLot.status === 'COMPLETED'">
+          <i class="bi bi-pencil"></i> แก้ไข Stock Lot
         </button>
-
-
-        <!-- เปลี่ยนสถานะ -->
-        <button
-          class="action-btn info"
-          (click)="updateStatus('ARRIVED')"
-          [disabled]="stockLot.status === 'COMPLETED' || stockLot.status === 'ARRIVED'">
-          <i class="bi bi-truck"></i>
-          สินค้าถึงแล้ว
+        <button class="action-btn info" (click)="updateStatus('ARRIVED')"
+                [disabled]="stockLot.status === 'COMPLETED' || stockLot.status === 'ARRIVED'">
+          <i class="bi bi-truck"></i> สินค้าถึงแล้ว
         </button>
-        <!-- ⭐ Complete & Create Transaction (ปุ่มหลัก) -->
-        <button
-          class="action-btn complete-btn"
-          (click)="completeStockLot()"
-          [disabled]="stockLot.status === 'COMPLETED' || !stockLot.items || stockLot.items.length === 0">
-          <i class="bi bi-check-circle-fill"></i>
-          Complete & Create Transaction
+        <button class="action-btn complete-btn" (click)="completeStockLot()"
+                [disabled]="stockLot.status === 'COMPLETED' || !stockLot.items || stockLot.items.length === 0">
+          <i class="bi bi-check-circle-fill"></i> Complete & Create Transaction
         </button>
-        <!-- ลบ -->
-        <button
-          class="action-btn danger"
-          (click)="deleteStockLot()"
-          [disabled]="stockLot.status === 'COMPLETED'">
-          <i class="bi bi-trash"></i>
-          ลบ Stock Lot
+        <button class="action-btn danger" (click)="deleteStockLot()" [disabled]="stockLot.status === 'COMPLETED'">
+          <i class="bi bi-trash"></i> ลบ Stock Lot
         </button>
-
-        <!-- กลับ -->
         <button class="action-btn secondary" (click)="goBack()">
-          <i class="bi bi-arrow-left"></i>
-          กลับ
+          <i class="bi bi-arrow-left"></i> กลับ
         </button>
       </div>
 
-      <!-- Help Text -->
       <div class="help-text" *ngIf="stockLot.status !== 'COMPLETED'">
         <i class="bi bi-info-circle"></i>
         <div>

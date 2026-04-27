@@ -49,4 +49,21 @@ export class EmployeeService {
   searchEmployeesByName(name: string): Observable<Employee[]> {
     return this.http.get<Employee[]>(`${this.apiUrl}/search?name=${name}`);
   }
+  // ⭐ ตรวจสอบว่า username ซ้ำหรือไม่
+  checkUsernameExists(username: string, excludeId?: number): Observable<{exists: boolean}> {
+    let url = `${this.apiUrl}/check-username?username=${username}`;
+    if (excludeId) {
+      url += `&excludeId=${excludeId}`;
+    }
+    return this.http.get<{exists: boolean}>(url);
+  }
+
+  // ⭐ ตรวจสอบว่า email ซ้ำหรือไม่
+  checkEmailExists(email: string, excludeId?: number): Observable<{exists: boolean}> {
+    let url = `${this.apiUrl}/check-email?email=${email}`;
+    if (excludeId) {
+      url += `&excludeId=${excludeId}`;
+    }
+    return this.http.get<{exists: boolean}>(url);
+  }
 }

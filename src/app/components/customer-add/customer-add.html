@@ -1,64 +1,108 @@
 <div class="main-container">
   <div class="container">
     <div class="page-header">
-      <h1>{{isEditMode ? 'Edit Customer' : 'New Customer'}}</h1>
-      <p>{{isEditMode ? 'Update customer details' : 'Create new customer'}}</p>
+      <h1>{{isEditMode ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}}</h1>
+      <p>{{isEditMode ? 'อัพเดทข้อมูลลูกค้าในระบบ' : 'สร้างข้อมูลลูกค้าใหม่ในระบบ'}}</p>
     </div>
 
     <form class="customer-form" [formGroup]="customerForm" (ngSubmit)="onSubmit()">
-      <div class="form-row">
-        <div class="form-fields">
-          <div class="field-row">
-            <div class="form-group">
-              <label for="customerName">Customer Name</label>
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-user"></i>
+          ข้อมูลลูกค้า
+        </h3>
+
+        <div class="field-row">
+          <div class="form-group">
+            <label for="customerName">
+              ชื่อลูกค้า <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-user input-icon"></i>
               <input
                 id="customerName"
                 formControlName="customerName"
-                placeholder="Enter customer name"
-                class="form-control"
-                [class.error]="customerForm.get('customerName')?.invalid && customerForm.get('customerName')?.touched">
-              <div class="error-message" *ngIf="customerForm.get('customerName')?.invalid && customerForm.get('customerName')?.touched">
-                Customer name is required and must be at least 2 characters
-              </div>
+                placeholder="กรอกชื่อลูกค้า"
+                class="form-control with-icon"
+                [class.error]="isFieldInvalid('customerName')"
+                [class.success]="customerForm.get('customerName')?.valid && customerForm.get('customerName')?.touched">
             </div>
-            <div class="form-group">
-              <label for="customerAddress">Address</label>
-              <input
-                id="customerAddress"
-                formControlName="customerAddress"
-                placeholder="Enter customer address"
-                class="form-control"
-                [class.error]="customerForm.get('customerAddress')?.invalid && customerForm.get('customerAddress')?.touched">
-              <div class="error-message" *ngIf="customerForm.get('customerAddress')?.invalid && customerForm.get('customerAddress')?.touched">
-                Address is required and must be at least 5 characters
-              </div>
+            <div class="error-message" *ngIf="isFieldInvalid('customerName')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกชื่อลูกค้าอย่างน้อย 2 ตัวอักษร
             </div>
           </div>
-          <div class="field-row">
-            <div class="form-group">
-              <label for="customerPhone">Phone Number</label>
+
+          <div class="form-group">
+            <label for="customerPhone">
+              เบอร์โทรศัพท์ <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-phone input-icon"></i>
               <input
                 id="customerPhone"
                 formControlName="customerPhone"
-                placeholder="Enter phone number"
-                class="form-control"
-                [class.error]="customerForm.get('customerPhone')?.invalid && customerForm.get('customerPhone')?.touched">
-              <div class="error-message" *ngIf="customerForm.get('customerPhone')?.invalid && customerForm.get('customerPhone')?.touched">
-                Please enter a valid phone number (10-11 digits)
-              </div>
+                placeholder="กรอกเบอร์โทรศัพท์"
+                class="form-control with-icon"
+                [class.error]="isFieldInvalid('customerPhone')"
+                [class.success]="customerForm.get('customerPhone')?.valid && customerForm.get('customerPhone')?.touched">
             </div>
+            <div class="error-message" *ngIf="isFieldInvalid('customerPhone')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกเบอร์โทรศัพท์ 9-11 หลักที่ถูกต้อง
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="form-group full-width">
+            <label for="customerAddress">
+              ที่อยู่ <span class="required">*</span>
+            </label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-marker-alt input-icon icon-top"></i>
+              <textarea
+                id="customerAddress"
+                formControlName="customerAddress"
+                placeholder="กรอกที่อยู่ลูกค้า"
+                class="form-control textarea with-icon"
+                rows="3"
+                [class.error]="isFieldInvalid('customerAddress')"
+                [class.success]="customerForm.get('customerAddress')?.valid && customerForm.get('customerAddress')?.touched">
+              </textarea>
+            </div>
+            <div class="error-message" *ngIf="isFieldInvalid('customerAddress')">
+              <i class="fas fa-exclamation-circle"></i>
+              กรุณากรอกที่อยู่อย่างน้อย 5 ตัวอักษร
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="form-group">
+            <label for="status">
+              สถานะ <span class="required">*</span>
+            </label>
+            <select
+              id="status"
+              formControlName="status"
+              class="form-control">
+              <option value="ACTIVE">ใช้งาน</option>
+              <option value="INACTIVE">ไม่ใช้งาน</option>
+            </select>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="back-btn" (click)="goBack()">
+        <button type="button" class="back-btn" (click)="goBack()" [disabled]="isSubmitting">
           <i class="fas fa-arrow-left"></i>
-          Back
+          ย้อนกลับ
         </button>
-        <button type="submit" class="submit-btn" [disabled]="customerForm.invalid">
-          <i class="fas fa-plus"></i>
-          {{isEditMode ? 'Update Customer' : 'Add Customer'}}
+        <button type="submit" class="submit-btn" [disabled]="customerForm.invalid || isSubmitting">
+          <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+          <i class="fas fa-save" *ngIf="!isSubmitting"></i>
+          {{isSubmitting ? 'กำลังบันทึก...' : (isEditMode ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มลูกค้า')}}
         </button>
       </div>
     </form>

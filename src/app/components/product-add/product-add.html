@@ -140,84 +140,14 @@
       </div>
 
       <div formArrayName="ingredients">
-        <div class="ingredient-item" *ngFor="let ingredient of ingredientsArray.controls; let i = index" [formGroupName]="i">
-          <div class="ingredient-header">
-            <h4>ส่วนประกอบที่ {{i + 1}}</h4>
-            <button type="button" class="remove-ingredient-btn" (click)="removeIngredient(i)" [disabled]="ingredientsArray.length === 1">
-              <i class="bi-trash"></i>
-            </button>
-          </div>
-
-          <div class="ingredient-form">
-            <div class="form-grid">
-              <div class="form-group">
-                <label>ชื่อส่วนประกอบ <span class="required">*</span></label>
-                <input
-                  formControlName="ingredientName"
-                  placeholder="เช่น ถุงเท้าสีดำข้อสั้น"
-                  class="form-control"
-                  [class.error]="ingredient.get('ingredientName')?.invalid && ingredient.get('ingredientName')?.touched">
-                <div class="error-message" *ngIf="ingredient.get('ingredientName')?.invalid && ingredient.get('ingredientName')?.touched">
-                  ชื่อส่วนประกอบจำเป็นต้องกรอก
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>เลือกจาก Stock</label>
-                <select
-                  formControlName="stockItemId"
-                  class="form-control"
-                  (change)="onStockItemChange(i, $any($event.target).value)">
-                  <option value="">เลือก Stock Item</option>
-                  <option *ngFor="let stock of stockOptions" [value]="stock.stockItemId">
-                    {{getStockOptionDisplay(stock)}}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label>จำนวนที่ต้องใช้ <span class="required">*</span></label>
-                <input
-                  formControlName="requiredQuantity"
-                  placeholder="0"
-                  class="form-control"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  [class.error]="ingredient.get('requiredQuantity')?.invalid && ingredient.get('requiredQuantity')?.touched">
-                <div class="error-message" *ngIf="ingredient.get('requiredQuantity')?.invalid && ingredient.get('requiredQuantity')?.touched">
-                  จำนวนจำเป็นต้องกรอก และต้องมากกว่า 0
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>หน่วย <span class="required">*</span></label>
-                <input
-                  formControlName="unit"
-                  placeholder="เช่น คู่, ชิ้น, ใบ"
-                  class="form-control"
-                  list="commonUnits"
-                  [class.error]="ingredient.get('unit')?.invalid && ingredient.get('unit')?.touched">
-                <datalist id="commonUnits">
-                  <option *ngFor="let unit of commonUnits" [value]="unit">
-                </datalist>
-                <div class="error-message" *ngIf="ingredient.get('unit')?.invalid && ingredient.get('unit')?.touched">
-                  หน่วยจำเป็นต้องกรอก
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>หมายเหตุ</label>
-              <input
-                formControlName="notes"
-                placeholder="หมายเหตุเพิ่มเติม"
-                class="form-control">
-            </div>
-          </div>
-        </div>
+        <!-- ⭐ ตรวจสอบว่า stockOptions ถูกส่งไปยัง component -->
+        <app-multi-lot-ingredient
+          *ngFor="let ingredient of ingredientsArray.controls; let i = index"
+          [ingredientIndex]="i"
+          [ingredientForm]="$any(ingredient)"
+          [stockOptions]="stockOptions"
+          (remove)="removeIngredient(i)">
+        </app-multi-lot-ingredient>
       </div>
 
       <button type="button" class="add-ingredient-btn" (click)="addIngredient()">

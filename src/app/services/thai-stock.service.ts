@@ -1,8 +1,8 @@
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { DefectiveRecord } from './china-stock.service';
 
-// ⭐ อัปเดต Interface รองรับ Quantity Tracking
 export interface ThaiStock {
   stockItemId?: number;
   name: string;
@@ -10,51 +10,36 @@ export interface ThaiStock {
   shopURL?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
   stockLotId?: number;
-  stockLot?: {
-    stockLotId: number;
-    lotName: string;
-  };
+  stockLot?: { stockLotId: number; lotName: string; };
 
-  // ⭐ Quantity Management
-  originalQuantity?: number;    // จำนวนทั้งหมด (ตอนนำเข้า)
-  currentQuantity?: number;     // จำนวนคงเหลือ (ปัจจุบัน)
-  usedQuantity?: number;        // จำนวนที่ใช้ไป
-  usagePercentage?: number;     // เปอร์เซ็นต์ที่ใช้ไป
-  remainingPercentage?: number; // เปอร์เซ็นต์ที่เหลือ
-  quantity?: number;            // Backward compatibility
+  // Quantity Management
+  originalQuantity?: number;
+  currentQuantity?: number;
+  usedQuantity?: number;
+  usagePercentage?: number;
+  remainingPercentage?: number;
+  quantity?: number;
+
+  // Defective fields
+  defectiveQuantity?: number;
+  defectiveValue?: number;
 
   priceTotal: number;
   shippingCost?: number;
   pricePerUnit?: number;
   pricePerUnitWithShipping?: number;
-  bufferPercentage?: number;
-  includeBuffer?: boolean;
+
+  vatPercentage?: number;
+  includeVat?: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ThaiStockService {
   private apiUrl = 'https://www.chubbycharlieshop.com/api/thai-stocks';
+  private defectiveApiUrl = 'https://www.chubbycharlieshop.com/api/defective-records';
 
   constructor(private http: HttpClient) {}
 
-  // ⭐ Format Quantity
-  formatQuantity(stock: ThaiStock): string {
-    const current = stock.currentQuantity || stock.quantity || 0;
-    const original = stock.originalQuantity || current;
-    return `${current} / ${original}`;
-  }
-
-  // ⭐ Get Usage Color
-  getUsageColor(percentage: number | undefined): string {
-    if (!percentage) return 'text-success';
-    if (percentage < 30) return 'text-success';
-    if (percentage < 70) return 'text-warning';
-    return 'text-danger';
-  }
-
-  // ⭐ Get Remaining Color
   getRemainingColor(percentage: number | undefined): string {
     if (!percentage) return 'text-danger';
     if (percentage >= 70) return 'text-success';
@@ -78,8 +63,8 @@ export class ThaiStockService {
     return this.http.get<ThaiStock[]>(`${this.apiUrl}/lot/${stockLotId}`);
   }
 
-  getTotalValueByLot(stockLotId: number): Observable<{totalValue: number}> {
-    return this.http.get<{totalValue: number}>(`${this.apiUrl}/lot/${stockLotId}/total-value`);
+  getTotalValueByLot(stockLotId: number): Observable<{ totalValue: number }> {
+    return this.http.get<{ totalValue: number }>(`${this.apiUrl}/lot/${stockLotId}/total-value`);
   }
 
   searchThaiStocks(keyword: string): Observable<ThaiStock[]> {
@@ -95,8 +80,8 @@ export class ThaiStockService {
       shippingCost: thaiStock.shippingCost || 0,
       status: thaiStock.status || 'ACTIVE',
       stockLotId: thaiStock.stockLotId || null,
-      includeBuffer: thaiStock.includeBuffer || false,
-      bufferPercentage: thaiStock.bufferPercentage || 0
+      includeVat: thaiStock.includeVat || false,
+      vatPercentage: thaiStock.vatPercentage || 0
     };
     return this.http.post<ThaiStock>(this.apiUrl, payload);
   }
@@ -110,14 +95,28 @@ export class ThaiStockService {
       shippingCost: thaiStock.shippingCost || 0,
       status: thaiStock.status || 'ACTIVE',
       stockLotId: thaiStock.stockLotId || null,
-      includeBuffer: thaiStock.includeBuffer || false,
-      bufferPercentage: thaiStock.bufferPercentage || 0
+      includeVat: thaiStock.includeVat || false,
+      vatPercentage: thaiStock.vatPercentage || 0
     };
     return this.http.put<ThaiStock>(`${this.apiUrl}/${id}`, payload);
   }
 
   updateThaiStockStatus(id: number, status: string): Observable<ThaiStock> {
     return this.http.patch<ThaiStock>(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  /** เพิ่มของเสีย (ตัด quantity + บันทึก history) */
+  recordDefective(id: number, count: number, note?: string): Observable<ThaiStock> {
+    return this.http.patch<ThaiStock>(`${this.apiUrl}/${id}/defective`, { count, note });
+  }
+
+  setDefectiveQuantity(id: number, count: number): Observable<ThaiStock> {
+    return this.http.put<ThaiStock>(`${this.apiUrl}/${id}/defective`, { count });
+  }
+
+  /** ดึงประวัติของเสีย */
+  getDefectiveRecords(stockItemId: number): Observable<DefectiveRecord[]> {
+    return this.http.get<DefectiveRecord[]>(`${this.defectiveApiUrl}/stock/${stockItemId}`);
   }
 
   deleteThaiStock(id: number): Observable<void> {

@@ -1,329 +1,281 @@
-<!-- stock-forecast-dashboard.html -->
-<div class="forecast-dashboard-container">
-  <div class="dashboard-header">
-    <div class="header-content">
-      <div class="dashboard-icon">
-        <i class="bi-graph-up-arrow"></i>
+<!-- stock-forecast-dashboard.html - ENHANCED VERSION -->
+<div class="dashboard-container">
+  <div class="forecast-dashboard">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-left">
+        <div class="header-icon">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div class="header-info">
+          <h1>📊 Stock Forecast Dashboard</h1>
+          <p>ระบบคาดการณ์สต็อกและการสั่งซื้ออัตโนมัติ</p>
+        </div>
       </div>
-      <div class="dashboard-title">
-        <h1>Stock Forecast & Reorder Dashboard</h1>
-        <p class="dashboard-subtitle">🤖 AI-Powered predictive analytics and automatic reorder recommendations</p>
+      <div class="header-actions">
+        <button
+          class="btn btn-secondary"
+          (click)="refresh()"
+          [disabled]="loading || calculating"
+          title="รีเฟรชข้อมูล">
+          <i class="bi bi-arrow-clockwise"></i>
+          รีเฟรช
+        </button>
+        <button
+          class="btn btn-primary"
+          (click)="calculateForecasts()"
+          [disabled]="loading || calculating">
+          <i class="bi bi-calculator"></i>
+          {{calculating ? 'กำลังคำนวณ...' : 'คำนวณใหม่'}}
+        </button>
       </div>
     </div>
-    <div class="header-actions">
-      <button class="action-btn secondary" (click)="loadDashboard()" [disabled]="loading">
-        <i class="bi-arrow-clockwise"></i>
-        Refresh
-      </button>
-      <button class="action-btn primary" (click)="calculateForecasts()" [disabled]="calculating || calculatingAI">
-        <i class="bi-calculator"></i>
-        {{calculating ? 'Calculating...' : 'Calculate Basic'}}
-      </button>
-      <!-- 🤖 NEW: AI Calculate Button -->
-      <button class="action-btn ai-primary" (click)="calculateForecastsWithAI()" [disabled]="calculating || calculatingAI">
-        <i class="bi-stars"></i>
-        {{calculatingAI ? 'AI Analyzing...' : '🤖 Calculate with AI'}}
-      </button>
+
+    <!-- Loading State -->
+    <div class="loading-section" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>กำลังโหลดข้อมูล...</p>
     </div>
-  </div>
 
-  <div class="loading-container" *ngIf="loading">
-    <div class="loading-spinner"></div>
-    <p>Loading forecast data...</p>
-  </div>
+    <!-- Main Content -->
+    <div class="dashboard-content" *ngIf="!loading && summary">
 
-  <div class="dashboard-content" *ngIf="!loading && summary">
-    <!-- Summary Statistics -->
-    <div class="summary-section">
-      <h2 class="section-title">Inventory Forecast Overview</h2>
-      <div class="summary-grid">
-        <div class="summary-card total">
-          <div class="card-icon">
-            <i class="bi-boxes"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.totalItems}}</div>
-            <div class="card-label">Total Items Tracked</div>
+      <!-- ⭐ NEW: Next Month Prediction Section -->
+      <div class="prediction-highlight" *ngIf="nextMonthSummary">
+        <div class="prediction-header">
+          <h2>🔮 การคาดการณ์เดือนถัดไป ({{nextMonthSummary.nextMonth}})</h2>
+          <div class="prediction-summary">
+            <div class="summary-stat">
+              <span class="stat-label">รวมคาดการณ์:</span>
+              <span class="stat-value">{{formatNumber(nextMonthSummary.totalPredicted)}} ชิ้น</span>
+            </div>
+            <div class="summary-stat">
+              <span class="stat-label">ความมั่นใจเฉลี่ย:</span>
+              <span class="stat-value">{{nextMonthSummary.averageConfidence.toFixed(1)}}%</span>
+            </div>
           </div>
         </div>
 
-        <div class="summary-card critical">
-          <div class="card-icon">
-            <i class="bi-exclamation-triangle-fill"></i>
+        <div class="prediction-grid" *ngIf="nextMonthPredictions.length > 0">
+          <div class="prediction-card" *ngFor="let pred of nextMonthPredictions">
+            <h3 class="prediction-stock-name">{{pred.stockItemName}}</h3>
+            <div class="prediction-details">
+              <div class="detail-row">
+                <span class="detail-label">คาดการณ์:</span>
+                <span class="detail-value highlight">{{formatNumber(pred.predictedNextMonthUsage)}} ชิ้น</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">แนะนำสั่ง:</span>
+                <span class="detail-value">{{formatNumber(pred.recommendedOrderForNextMonth)}} ชิ้น</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">วิธีคำนวณ:</span>
+                <span class="detail-badge">{{pred.forecastMethod}}</span>
+              </div>
+            </div>
           </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.criticalItems}}</div>
-            <div class="card-label">Critical Items</div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="card card-total">
+          <div class="card-icon">
+            <i class="bi bi-boxes"></i>
+          </div>
+          <div class="card-body">
+            <div class="card-value">{{summary.totalItems}}</div>
+            <div class="card-label">รายการทั้งหมด</div>
+          </div>
+        </div>
+
+        <div class="card card-critical">
+          <div class="card-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div class="card-body">
+            <div class="card-value">{{summary.criticalItems}}</div>
+            <div class="card-label">วิกฤต</div>
             <div class="card-sublabel">{{formatCurrency(summary.criticalItemsCost)}}</div>
           </div>
         </div>
 
-        <div class="summary-card high">
+        <div class="card card-high">
           <div class="card-icon">
-            <i class="bi-exclamation-circle-fill"></i>
+            <i class="bi bi-exclamation-circle-fill"></i>
           </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.highUrgencyItems}}</div>
-            <div class="card-label">High Urgency</div>
+          <div class="card-body">
+            <div class="card-value">{{summary.highUrgencyItems}}</div>
+            <div class="card-label">เร่งด่วนสูง</div>
             <div class="card-sublabel">{{formatCurrency(summary.highUrgencyItemsCost)}}</div>
           </div>
         </div>
 
-        <div class="summary-card medium">
+        <div class="card card-medium">
           <div class="card-icon">
-            <i class="bi-dash-circle-fill"></i>
+            <i class="bi bi-dash-circle-fill"></i>
           </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.mediumUrgencyItems}}</div>
-            <div class="card-label">Medium Urgency</div>
+          <div class="card-body">
+            <div class="card-value">{{summary.mediumUrgencyItems}}</div>
+            <div class="card-label">ปานกลาง</div>
           </div>
         </div>
 
-        <div class="summary-card low">
+        <div class="card card-low">
           <div class="card-icon">
-            <i class="bi-check-circle-fill"></i>
+            <i class="bi bi-check-circle-fill"></i>
           </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.lowUrgencyItems}}</div>
-            <div class="card-label">Low Urgency</div>
+          <div class="card-body">
+            <div class="card-value">{{summary.lowUrgencyItems}}</div>
+            <div class="card-label">ปกติ</div>
           </div>
         </div>
 
-        <div class="summary-card cost">
+        <div class="card card-cost">
           <div class="card-icon">
-            <i class="bi-cash-coin"></i>
+            <i class="bi bi-cash-coin"></i>
           </div>
-          <div class="card-content">
-            <div class="card-number">{{formatCurrency(summary.totalEstimatedCost)}}</div>
-            <div class="card-label">Total Estimated Cost</div>
-            <div class="card-sublabel">For urgent items</div>
-          </div>
-        </div>
-
-        <!-- 🤖 NEW: AI Enhancement Card -->
-        <div class="summary-card ai-enhanced" *ngIf="summary.aiEnhancedItems">
-          <div class="card-icon">
-            <i class="bi-stars"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-number">{{summary.aiEnhancedItems}}</div>
-            <div class="card-label">🤖 AI Enhanced</div>
-            <div class="card-sublabel">{{summary.aiRecommendationsCount || 0}} AI insights</div>
+          <div class="card-body">
+            <div class="card-value small">{{formatCurrency(summary.totalEstimatedCost)}}</div>
+            <div class="card-label">ต้นทุนรวม</div>
+            <div class="card-sublabel">สำหรับรายการเร่งด่วน</div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 🤖 NEW: AI Recommendations Section -->
-    <div class="ai-recommendations-section" *ngIf="aiRecommendations && aiRecommendations.urgentItems.length > 0">
-      <div class="section-header">
+      <!-- Quick Actions -->
+      <div class="quick-actions">
         <h2 class="section-title">
-          <i class="bi-stars"></i> 🤖 AI-Powered Recommendations
-          <span class="ai-badge">Powered by Google Gemini</span>
+          <i class="bi bi-lightning-fill"></i> เมนูด่วน
         </h2>
-        <button class="view-all-btn ai" (click)="navigateToAIRecommendations()">
-          View All AI Insights <i class="bi-arrow-right"></i>
-        </button>
+        <div class="action-grid">
+          <button class="action-card urgent" (click)="navigateToUrgentItems()">
+            <div class="action-icon">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">รายการเร่งด่วน</div>
+              <div class="action-count">{{summary.criticalItems + summary.highUrgencyItems}} รายการ</div>
+            </div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </button>
+
+          <button class="action-card recommendations" (click)="navigateToRecommendations()">
+            <div class="action-icon">
+              <i class="bi bi-cart-check-fill"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">คำแนะนำการสั่งซื้อ</div>
+              <div class="action-description">วางแผนการสั่งซื้อ</div>
+            </div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </button>
+
+          <button class="action-card analysis" (click)="navigateToAnalysis()">
+            <div class="action-icon">
+              <i class="bi bi-graph-up"></i>
+            </div>
+            <div class="action-content">
+              <div class="action-title">วิเคราะห์การใช้งาน</div>
+              <div class="action-description">รายงานสถิติ</div>
+            </div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="ai-summary-bar">
-        <div class="ai-stat">
-          <i class="bi-lightning-charge-fill"></i>
-          <span class="stat-value">{{aiRecommendations.urgentItems.length}}</span>
-          <span class="stat-label">Urgent Items</span>
+      <!-- Urgent Items Preview -->
+      <div class="urgent-preview" *ngIf="urgentItems.length > 0">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="bi bi-exclamation-triangle-fill"></i> รายการเร่งด่วน
+          </h2>
+          <button class="btn-link" (click)="navigateToUrgentItems()">
+            ดูทั้งหมด <i class="bi bi-arrow-right"></i>
+          </button>
         </div>
-        <div class="ai-stat">
-          <i class="bi-cash-stack"></i>
-          <span class="stat-value">{{formatCurrency(aiRecommendations.totalBudgetNeeded)}}</span>
-          <span class="stat-label">Budget Needed</span>
-        </div>
-        <div class="ai-stat">
-          <i class="bi-clock-history"></i>
-          <span class="stat-label">Updated: {{formatDateTime(aiRecommendations.timestamp)}}</span>
-        </div>
-      </div>
 
-      <div class="ai-items-preview">
-        <div class="ai-item-card" *ngFor="let item of aiRecommendations.urgentItems.slice(0, 3)"
-             [ngClass]="getUrgencyClass(item.urgencyLevel)">
-          <div class="ai-item-header">
-            <div class="item-title-group">
-              <h4>{{item.stockItemName}}</h4>
-              <span class="ai-indicator">
-                <i class="bi-stars"></i> AI Enhanced
+        <div class="items-grid">
+          <div
+            class="item-card"
+            *ngFor="let item of urgentItems.slice(0, 6)"
+            [ngClass]="getUrgencyClass(item.urgencyLevel)">
+
+            <div class="item-header">
+              <div class="item-info">
+                <h3 class="item-name">{{item.stockItemName}}</h3>
+                <span class="item-type">{{item.stockType}}</span>
+              </div>
+              <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
+                {{item.urgencyLevel}}
               </span>
             </div>
-            <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
-              {{item.urgencyLevel}}
-            </span>
-          </div>
 
-          <div class="ai-item-body">
-            <!-- AI Trend Indicator -->
-            <div class="ai-trend" *ngIf="item.aiTrend">
-              <i [class]="getTrendIcon(item.aiTrend)" [ngClass]="getTrendClass(item.aiTrend)"></i>
-              <span class="trend-text">{{item.aiTrend}}</span>
-              <span class="trend-confidence" [ngClass]="getConfidenceClass(item.aiTrendConfidence)">
-                {{item.aiTrendConfidence}}% confidence
-              </span>
-            </div>
-
-            <!-- Key Metrics -->
-            <div class="ai-metrics">
-              <div class="metric">
-                <span class="metric-label">Current Stock:</span>
-                <span class="metric-value">{{item.currentStock}} units</span>
+            <div class="item-stats">
+              <div class="stat">
+                <div class="stat-label">คงเหลือ</div>
+                <div class="stat-value">{{item.currentStock}} ชิ้น</div>
               </div>
-              <div class="metric">
-                <span class="metric-label">Days Left:</span>
-                <span class="metric-value critical">{{item.daysUntilStockOut}} days</span>
+              <div class="stat critical">
+                <div class="stat-label">เหลือเวลา</div>
+                <div class="stat-value">{{item.daysUntilStockOut}} วัน</div>
               </div>
-              <div class="metric">
-                <span class="metric-label">AI Predicted Usage:</span>
-                <span class="metric-value">{{item.aiPredictedDailyUsage || item.averageDailyUsage}} units/day</span>
+              <div class="stat">
+                <div class="stat-label">แนะนำสั่ง</div>
+                <div class="stat-value">{{item.recommendedOrderQuantity}} ชิ้น</div>
               </div>
-              <div class="metric">
-                <span class="metric-label">Recommended Order:</span>
-                <span class="metric-value highlight">{{item.recommendedOrderQuantity}} units</span>
+              <div class="stat">
+                <div class="stat-label">ต้นทุน</div>
+                <div class="stat-value small">{{formatCurrency(item.estimatedOrderCost)}}</div>
               </div>
-            </div>
-
-            <!-- AI Analysis Preview -->
-            <div class="ai-analysis-preview" *ngIf="item.aiAnalysis">
-              <i class="bi-robot"></i>
-              <p>{{item.aiAnalysis.substring(0, 150)}}{{item.aiAnalysis.length > 150 ? '...' : ''}}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="actions-section">
-      <h2 class="section-title">Quick Actions</h2>
-      <div class="action-buttons">
-        <button class="action-btn-large urgent" (click)="navigateToUrgentItems()">
-          <i class="bi-exclamation-triangle-fill"></i>
-          <span class="btn-label">View Urgent Items</span>
-          <span class="btn-count">{{summary.criticalItems + summary.highUrgencyItems}}</span>
-        </button>
-        <button class="action-btn-large recommendations" (click)="navigateToRecommendations()">
-          <i class="bi-cart-check-fill"></i>
-          <span class="btn-label">Order Recommendations</span>
-        </button>
-        <!-- 🤖 NEW: AI Recommendations Button -->
-        <button class="action-btn-large ai" (click)="navigateToAIRecommendations()" *ngIf="aiRecommendations">
-          <i class="bi-stars"></i>
-          <span class="btn-label">🤖 AI Insights</span>
-          <span class="btn-badge">AI</span>
-        </button>
-        <button class="action-btn-large analysis" (click)="navigateToAnalysis()">
-          <i class="bi-graph-up"></i>
-          <span class="btn-label">Usage Analysis</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Urgent Items List (existing code) -->
-    <div class="urgent-items-section" *ngIf="urgentItems.length > 0">
-      <div class="section-header">
-        <h2 class="section-title">🚨 Urgent Stock Items</h2>
-        <button class="view-all-btn" (click)="navigateToUrgentItems()">
-          View All <i class="bi-arrow-right"></i>
-        </button>
-      </div>
-
-      <div class="urgent-items-list">
-        <div class="urgent-item-card" *ngFor="let item of urgentItems.slice(0, 5)"
-             [ngClass]="getUrgencyClass(item.urgencyLevel)">
-
-          <!-- 🤖 AI Badge -->
-          <div class="ai-badge-overlay" *ngIf="isAIPowered(item)">
-            <i class="bi-stars"></i> AI
+      <!-- Stock Type Summary -->
+      <div class="stock-summary">
+        <div class="summary-item china">
+          <div class="summary-icon">
+            <i class="bi bi-geo-alt-fill"></i>
           </div>
-
-          <div class="item-header">
-            <div class="item-info">
-              <h3 class="item-name">{{item.stockItemName}}</h3>
-              <span class="item-type">{{item.stockType}}</span>
-              <!-- 🤖 Trend Indicator -->
-              <span class="trend-indicator" *ngIf="item.aiTrend" [ngClass]="getTrendClass(item.aiTrend)">
-                <i [class]="getTrendIcon(item.aiTrend)"></i>
-                {{item.aiTrend}}
-              </span>
-            </div>
-            <span class="urgency-badge" [ngClass]="getUrgencyClass(item.urgencyLevel)">
-              {{item.urgencyLevel}}
-            </span>
+          <div class="summary-content">
+            <div class="summary-label">China Stock</div>
+            <div class="summary-value">{{chinaStockCount}} รายการ</div>
           </div>
+        </div>
 
-          <div class="item-stats">
-            <div class="stat-item">
-              <span class="stat-label">Current Stock:</span>
-              <span class="stat-value">{{item.currentStock}} units</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Days Until Stockout:</span>
-              <span class="stat-value critical">{{item.daysUntilStockOut}} days</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Daily Usage:</span>
-              <span class="stat-value">{{item.averageDailyUsage}} units/day</span>
-            </div>
-            <!-- 🤖 AI Predicted Usage -->
-            <div class="stat-item" *ngIf="item.aiPredictedDailyUsage">
-              <span class="stat-label">🤖 AI Predicted:</span>
-              <span class="stat-value ai-value">{{item.aiPredictedDailyUsage}} units/day</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Recommended Order:</span>
-              <span class="stat-value">{{item.recommendedOrderQuantity}} units</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Estimated Cost:</span>
-              <span class="stat-value cost">{{formatCurrency(item.estimatedOrderCost)}}</span>
-            </div>
+        <div class="summary-item thai">
+          <div class="summary-icon">
+            <i class="bi bi-house-fill"></i>
           </div>
-
-          <!-- 🤖 AI Recommendation Box -->
-          <div class="item-recommendation ai" *ngIf="item.aiAnalysis">
-            <i class="bi-robot"></i>
-            <span><strong>🤖 AI Insight:</strong> {{item.aiAnalysis}}</span>
-          </div>
-
-          <!-- Traditional Recommendation Box -->
-          <div class="item-recommendation" *ngIf="item.recommendations && !item.aiAnalysis">
-            <i class="bi-lightbulb-fill"></i>
-            <span>{{item.recommendations}}</span>
+          <div class="summary-content">
+            <div class="summary-label">Thai Stock</div>
+            <div class="summary-value">{{thaiStockCount}} รายการ</div>
           </div>
         </div>
       </div>
+
+      <!-- Last Updated -->
+      <div class="last-updated">
+        <i class="bi bi-clock"></i>
+        อัพเดทล่าสุด: {{formatDateTime(summary.lastUpdated)}}
+      </div>
     </div>
 
-    <!-- Stock Running Out Soon (existing code continues...) -->
-    <div class="running-out-section" *ngIf="soonestToRunOut.length > 0">
-      <!-- ... existing code ... -->
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && !summary">
+      <div class="empty-icon">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <h3>ยังไม่มีข้อมูล Stock Forecast</h3>
+      <p>กรุณาคำนวณข้อมูลเพื่อดูการคาดการณ์</p>
+      <button class="btn btn-primary" (click)="calculateForecasts()">
+        <i class="bi bi-calculator"></i>
+        คำนวณเลย
+      </button>
     </div>
 
-    <!-- Last Updated Info -->
-    <div class="last-updated">
-      <i class="bi-clock"></i>
-      Last updated: {{formatDate(summary.lastUpdated)}}
-    </div>
-  </div>
-
-  <!-- Empty State -->
-  <div class="empty-state" *ngIf="!loading && !summary">
-    <i class="bi-graph-up-arrow"></i>
-    <h3>No Forecast Data Available</h3>
-    <p>Calculate forecasts to see predictive analytics and recommendations</p>
-    <button class="calculate-btn" (click)="calculateForecasts()">
-      <i class="bi-calculator"></i>
-      Calculate Now
-    </button>
-    <button class="calculate-btn ai" (click)="calculateForecastsWithAI()">
-      <i class="bi-stars"></i>
-      🤖 Calculate with AI
-    </button>
   </div>
 </div>

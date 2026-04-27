@@ -5,13 +5,17 @@ import { Observable } from 'rxjs';
 export interface Customer {
   customerId?: number;
   customerName: string;
-  customerPhone?: string;     // ✅ แก้จาก phone
-  customerAddress?: string;    // ✅ แก้จาก address
-  email?: string;
-  taxId?: string;
-  customerType?: string;
-  notes?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
   createdDate?: Date;
+  updatedDate?: Date;
+}
+
+export interface CustomerStats {
+  total: number;
+  active: number;
+  inactive: number;
 }
 
 @Injectable({
@@ -42,12 +46,25 @@ export class CustomerService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  searchCustomers(keyword: string): Observable<Customer[]> {
-    return this.http.get<Customer[]>(`${this.apiUrl}/search?keyword=${keyword}`);
+  searchCustomers(keyword: string, status?: string): Observable<Customer[]> {
+    let url = `${this.apiUrl}/search?keyword=${keyword}`;
+    if (status) {
+      url += `&status=${status}`;
+    }
+    return this.http.get<Customer[]>(url);
   }
 
-  // ✅ เพิ่ม method ที่ขาด
   searchCustomersByNameOrPhone(searchTerm: string): Observable<Customer[]> {
     return this.searchCustomers(searchTerm);
+  }
+
+  // ⭐ Get customers by status
+  getCustomersByStatus(status: string): Observable<Customer[]> {
+    return this.http.get<Customer[]>(`${this.apiUrl}/status/${status}`);
+  }
+
+  // ⭐ Get statistics
+  getStatistics(): Observable<CustomerStats> {
+    return this.http.get<CustomerStats>(`${this.apiUrl}/stats`);
   }
 }

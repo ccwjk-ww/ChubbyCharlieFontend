@@ -41,6 +41,11 @@ export class OrderAddComponent implements OnInit {
   discount: number = 0;
   notes: string = '';
 
+  // ⭐ VAT
+  vatEnabled: boolean = false;
+  vatRate: number = 7;
+  vatAmount: number = 0;
+
   // Order items
   orderItems: OrderItemForm[] = [];
 
@@ -126,6 +131,10 @@ export class OrderAddComponent implements OnInit {
     this.discount = order.discount || 0;
     this.notes = order.notes || '';
 
+    // ⭐ VAT
+    this.vatEnabled = order.vatEnabled || false;
+    this.vatRate = order.vatRate || 7;
+
     this.orderItems = [];
     if (order.orderItems && order.orderItems.length > 0) {
       order.orderItems.forEach(item => {
@@ -210,6 +219,7 @@ export class OrderAddComponent implements OnInit {
     this.calculateTotals();
   }
 
+  // ⭐ calculateTotals พร้อม VAT
   calculateTotals(): void {
     this.subtotal = this.orderItems.reduce((sum, item) => {
       const itemTotal = item.totalPrice || 0;
@@ -218,11 +228,28 @@ export class OrderAddComponent implements OnInit {
 
     const shippingAmount = this.shippingFee || 0;
     const discountAmount = this.discount || 0;
-    this.netAmount = this.subtotal + shippingAmount - discountAmount;
+    const beforeVat = this.subtotal + shippingAmount - discountAmount;
+
+    // ⭐ คำนวณ VAT
+    if (this.vatEnabled && this.vatRate > 0) {
+      this.vatAmount = Math.round(beforeVat * (this.vatRate / 100) * 100) / 100;
+    } else {
+      this.vatAmount = 0;
+    }
+
+    this.netAmount = beforeVat + this.vatAmount;
 
     if (this.netAmount < 0) {
       this.netAmount = 0;
     }
+  }
+
+  // ⭐ เรียกเมื่อ toggle VAT checkbox
+  onVatToggle(): void {
+    if (!this.vatEnabled) {
+      this.vatAmount = 0;
+    }
+    this.calculateTotals();
   }
 
   onSubmit(): void {
@@ -243,6 +270,9 @@ export class OrderAddComponent implements OnInit {
       shippingFee: this.shippingFee || 0,
       discount: this.discount || 0,
       notes: this.notes,
+      // ⭐ VAT
+      vatEnabled: this.vatEnabled,
+      vatRate: this.vatEnabled ? (this.vatRate || 7) : null,
       orderItems: this.orderItems.map(item => {
         const quantity = item.quantity || 1;
         const unitPrice = item.unitPrice || 0;
@@ -270,9 +300,6 @@ export class OrderAddComponent implements OnInit {
     operation.subscribe({
       next: (response) => {
         const message = this.isEditMode ? 'แก้ไขออเดอร์สำเร็จ' : 'สร้างออเดอร์สำเร็จ';
-
-        // ⭐ ไม่สร้าง Transaction ที่นี่แล้ว
-        // Transaction จะถูกสร้างอัตโนมัติเมื่อปรับสถานะการชำระเงินเป็น PAID
         alert(message);
         this.router.navigate(['/orders']);
       },
@@ -292,6 +319,12 @@ export class OrderAddComponent implements OnInit {
 
     if (this.orderItems.length === 0) {
       alert('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ');
+      return false;
+    }
+
+    // ⭐ ตรวจสอบ VAT Rate
+    if (this.vatEnabled && (!this.vatRate || this.vatRate <= 0 || this.vatRate > 100)) {
+      alert('กรุณากรอก VAT (%) ให้ถูกต้อง (1-100)');
       return false;
     }
 

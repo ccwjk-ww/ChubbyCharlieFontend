@@ -20,7 +20,11 @@
           <span [class]="getPaymentStatusClass(order.paymentStatus)">
             {{order.paymentStatus}}
           </span>
-          <!-- ⭐ NEW: Badge สถานะการตัด Stock -->
+          <!-- ⭐ VAT Badge -->
+          <span class="badge badge-vat" *ngIf="order.vatEnabled">
+            <i class="bi-percent"></i> VAT {{order.vatRate}}%
+          </span>
+          <!-- Stock Deduction Badge -->
           <span [class]="getStockDeductionBadgeClass()"
                 *ngIf="stockDeductionStatus"
                 [title]="getStockDeductionBadgeText()">
@@ -52,6 +56,12 @@
           <div class="info-item">
             <span class="label">วันที่ส่ง:</span>
             <span class="value">{{formatDate(order.deliveryDate)}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">วันที่ชำระเงิน:</span>
+            <span class="value" [class.paid]="order.paymentStatus === 'PAID'">
+              {{ order.paymentDate ? formatDate(order.paymentDate) : '-' }}
+            </span>
           </div>
           <div class="info-item">
             <span class="label">ไฟล์ต้นฉบับ:</span>
@@ -143,26 +153,47 @@
             <span class="label">ส่วนลด:</span>
             <span class="value text-red">-{{formatCurrency(order.discount)}}</span>
           </div>
+
+          <!-- ⭐ แสดง VAT เฉพาะเมื่อมีการใช้ VAT -->
+          <div class="summary-item vat-summary-item" *ngIf="order.vatEnabled && order.vatAmount">
+            <span class="label">
+              <i class="bi-percent"></i>
+              VAT ({{order.vatRate}}%):
+            </span>
+            <span class="value text-vat">+{{formatCurrency(order.vatAmount)}}</span>
+          </div>
+
           <div class="summary-item total">
             <span class="label">ยอดสุทธิ:</span>
             <span class="value">{{formatCurrency(order.netAmount)}}</span>
+          </div>
+
+          <!-- ⭐ หมายเหตุ VAT ด้านล่าง total -->
+          <div class="vat-note" *ngIf="order.vatEnabled && order.vatAmount">
+            <i class="bi-info-circle"></i>
+            ยอดสุทธิรวม VAT {{order.vatRate}}% ({{formatCurrency(order.vatAmount)}}) แล้ว
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ⭐ Actions Card - ปรับปรุงปุ่มให้รองรับ Restore Stock -->
+    <!-- Actions Card -->
     <div class="actions-card">
       <h3>การดำเนินการ</h3>
 
       <div class="actions-grid">
-        <!-- ⭐ ปุ่มแก้ไขออเดอร์ -->
+
+        <button class="action-btn invoice" (click)="openTaxInvoice()">
+          <i class="bi-receipt"></i> ออกใบกำกับภาษี
+        </button>
+
+        <!-- ปุ่มแก้ไขออเดอร์ -->
         <button class="action-btn primary" (click)="editOrder()">
           <i class="bi-pencil"></i>
           แก้ไขออเดอร์
         </button>
 
-        <!-- ⭐ ปุ่ม เช็ค & ตัด Stock - Disable เมื่อตัดครบแล้ว -->
+        <!-- ปุ่ม เช็ค & ตัด Stock -->
         <button
           class="action-btn success"
           (click)="checkStock()"
@@ -175,7 +206,7 @@
           <span class="status-indicator" *ngIf="isAllStockDeducted()">✅</span>
         </button>
 
-        <!-- ⭐ NEW: ปุ่ม คืน Stock - แสดงเฉพาะเมื่อมีรายการที่ตัดแล้ว -->
+        <!-- ปุ่ม คืน Stock -->
         <button
           class="action-btn warning"
           (click)="restoreStock()"
@@ -188,7 +219,7 @@
           คืน Stock
         </button>
 
-        <!-- ⭐ ปุ่มยืนยันออเดอร์ -->
+        <!-- ปุ่มยืนยันออเดอร์ -->
         <button
           class="action-btn info"
           (click)="updateStatus('CONFIRMED')"
@@ -197,7 +228,7 @@
           ยืนยันออเดอร์
         </button>
 
-        <!-- ⭐ ปุ่มชำระเงินแล้ว -->
+        <!-- ปุ่มชำระเงินแล้ว -->
         <button
           class="action-btn info"
           (click)="updatePaymentStatus('PAID')"
@@ -207,7 +238,7 @@
           <span class="status-indicator" *ngIf="order.paymentStatus === 'PAID'">✅</span>
         </button>
 
-        <!-- ⭐ ปุ่มยกเลิกออเดอร์ -->
+        <!-- ปุ่มยกเลิกออเดอร์ -->
         <button
           class="action-btn danger"
           (click)="cancelOrder()"
@@ -217,7 +248,7 @@
         </button>
       </div>
 
-      <!-- ⭐ NEW: Stock Status Info Panel -->
+      <!-- Stock Status Info Panel -->
       <div class="stock-status-panel" *ngIf="stockDeductionStatus && stockDeductionStatus.totalItems > 0">
         <h4>📊 สถานะการตัด Stock</h4>
         <div class="status-details">

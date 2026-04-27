@@ -291,25 +291,49 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  //6 month
+//   private async loadMonthlyTransactions(): Promise<void> {
+//     return new Promise((resolve) => {
+//       this.dashboardService.getLastSixMonthsTransactions().subscribe({
+//         next: (data: any[]) => {
+//           const labels = data.map(d => d.month);
+//           const income = data.map(d => d.totalIncome);
+//           const expense = data.map(d => d.totalExpense);
+//           const profit = data.map(d => d.netAmount);
+//
+//           this.transactionLineChartData = {
+//             labels,
+//             datasets: [
+//               { ...this.transactionLineChartData.datasets[0], data: income },
+//               { ...this.transactionLineChartData.datasets[1], data: expense },
+//               { ...this.transactionLineChartData.datasets[2], data: profit }
+//             ]
+//           };
+//           resolve();
+//         },
+//         error: () => resolve()
+//       });
+//     });
+//   }
+
+  //1 year
   private async loadMonthlyTransactions(): Promise<void> {
     return new Promise((resolve) => {
-      this.dashboardService.getMonthlyTransactions(6).subscribe({
+      this.dashboardService.getLastTwelveMonthsTransactions().subscribe({
         next: (data: any[]) => {
-          if (data?.length > 0) {
-            const labels = data.map(d => d.month);
-            const income = data.map(d => d.income || 0);
-            const expense = data.map(d => d.expense || 0);
-            const profit = income.map((inc, i) => inc - (expense[i] || 0));
+          const month = data.map(d => d.month);      // 12 เดือนล่าสุด
+          const income = data.map(d => d.totalIncome);
+          const expense = data.map(d => d.totalExpense);
+          const profit = data.map(d => d.netAmount);
 
-            this.transactionLineChartData = {
-              labels,
-              datasets: [
-                { ...this.transactionLineChartData.datasets[0], data: income },
-                { ...this.transactionLineChartData.datasets[1], data: expense },
-                { ...this.transactionLineChartData.datasets[2], data: profit }
-              ]
-            };
-          }
+          this.transactionLineChartData = {
+            labels: month,
+            datasets: [
+              { ...this.transactionLineChartData.datasets[0], data: income },
+              { ...this.transactionLineChartData.datasets[1], data: expense },
+              { ...this.transactionLineChartData.datasets[2], data: profit }
+            ]
+          };
           resolve();
         },
         error: () => resolve()

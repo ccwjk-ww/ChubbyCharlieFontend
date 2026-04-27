@@ -1,12 +1,12 @@
-<div class="customer-container "  (click)="onDocumentClick()">
+<div class="customer-container" (click)="onDocumentClick()">
   <div class="customer-header">
     <div class="customer-header-top">
       <div class="customer-icon">
         <i class="bi-people"></i>
       </div>
       <div class="customer-title">
-        <h1>All Customers</h1>
-        <p class="customer-subtitle">View, search for and add new customers</p>
+        <h1>จัดการลูกค้า</h1>
+        <p class="customer-subtitle">ค้นหา เพิ่ม และจัดการข้อมูลลูกค้า</p>
       </div>
     </div>
 
@@ -17,21 +17,32 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Enter search word or phone number"
+            placeholder="ค้นหาชื่อ เบอร์โทร หรือที่อยู่"
             [(ngModel)]="searchTerm"
             (input)="onSearch()"
           />
         </div>
+
+        <!-- ⭐ Statistics Card (แบบเดียวกับ Staff) -->
         <div class="stats-card">
           <div class="stats-number">{{totalCustomers}}</div>
-          <div class="stats-label">Total number of customers</div>
+          <div class="stats-label">ลูกค้าทั้งหมด</div>
         </div>
       </div>
 
       <div class="customer-controls-right">
+        <!-- ⭐ Status Filter (เพิ่มเหมือน Staff) -->
+        <div class="filter-section">
+          <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onStatusFilterChange()">
+            <option value="ALL">สถานะทั้งหมด</option>
+            <option value="ACTIVE">ใช้งาน</option>
+            <option value="INACTIVE">ไม่ใช้งาน</option>
+          </select>
+        </div>
+
         <button class="add-customer-btn" (click)="openAddCustomerModal()">
           <i class="bi-plus"></i>
-          Add New Customer
+          เพิ่มลูกค้าใหม่
         </button>
       </div>
     </div>
@@ -39,63 +50,83 @@
 
   <div class="customer-table-container">
     <div class="customer-table-header">
-      <h3 class="table-title">All Customers</h3>
+      <h3 class="table-title">รายการลูกค้า</h3>
       <div class="table-controls">
         <div class="per-page-selector">
-          <span>Showing</span>
+          <span>แสดง</span>
           <select class="per-page-select" [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <span>per page</span>
+          <span>รายการต่อหน้า</span>
         </div>
       </div>
     </div>
 
     <div class="loading-container" *ngIf="loading">
       <div class="loading-spinner"></div>
-      <p>Loading customer data...</p>
+      <p>กำลังโหลดข้อมูลลูกค้า...</p>
     </div>
 
     <div class="table-wrapper" *ngIf="!loading">
       <table class="customer-table">
         <thead>
         <tr>
-          <th class="col-sn">S/N</th>
-          <th class="col-name">Name</th>
-          <th class="col-address">Address</th>
-          <th class="col-phone">Phone</th>
-          <th class="col-action">Action</th>
+          <th class="col-sn">ลำดับ</th>
+          <th class="col-name">ชื่อลูกค้า</th>
+          <th class="col-phone">เบอร์โทร</th>
+          <th class="col-address">ที่อยู่</th>
+          <th class="col-status">สถานะ</th>
+          <th class="col-action">จัดการ</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let customer of paginatedCustomers; let i = index">
           <td class="col-sn">{{getRowNumber(i)}}</td>
-          <td class="col-name">{{customer.customerName}}</td>
-          <td class="col-address">{{customer.customerAddress}}</td>
-          <td class="col-phone">{{customer.customerPhone}}</td>
+          <td class="col-name">
+            <div class="customer-name-cell">
+<!--              <i class="bi-person-circle"></i>-->
+              {{customer.customerName}}
+            </div>
+          </td>
+          <td class="col-phone">
+            <div class="phone-cell">
+<!--              <i class="bi-telephone"></i>-->
+              {{customer.customerPhone || '-'}}
+            </div>
+          </td>
+          <td class="col-address">{{customer.customerAddress || '-'}}</td>
+          <td class="col-status">
+            <span [class]="getStatusClass(customer.status)">
+              {{customer.status === 'ACTIVE' ? 'ใช้งาน' : customer.status === 'INACTIVE' ? 'ไม่ใช้งาน' : 'N/A'}}
+            </span>
+          </td>
           <td class="col-action">
             <div class="action-dropdown">
               <button class="action-btn" (click)="toggleDropdown($event, customer)">
-                Actions <i class="bi bi-chevron-down"></i>
+                จัดการ <i class="bi bi-chevron-down"></i>
               </button>
               <ul class="dropdown-menu" [class.show]="isDropdownOpen && activeCustomer === customer">
                 <li>
-                  <button class="dropdown-item" (click)="editCustomer(customer)">Edit</button>
+                  <button class="dropdown-item" (click)="editCustomer(customer)">
+                    <i class="bi-pencil"></i> แก้ไข
+                  </button>
                 </li>
                 <li>
-                  <button class="dropdown-item" (click)="deleteCustomer(customer)">Delete</button>
+                  <button class="dropdown-item delete" (click)="deleteCustomer(customer)">
+                    <i class="bi-trash"></i> ลบ
+                  </button>
                 </li>
               </ul>
             </div>
           </td>
         </tr>
         <tr *ngIf="filteredCustomers.length === 0 && !loading">
-          <td colspan="5" class="empty-state">
-            <i class="bi-people"></i>
-            <p>No customers found</p>
+          <td colspan="7" class="empty-state">
+            <i class="bi-inbox"></i>
+            <p>ไม่พบข้อมูลลูกค้า</p>
           </td>
         </tr>
         </tbody>
@@ -103,16 +134,22 @@
     </div>
 
     <div class="pagination-container" *ngIf="!loading && filteredCustomers.length > 0">
+      <div class="pagination-info">
+        แสดง {{((currentPage - 1) * itemsPerPage) + 1}} ถึง {{Math.min(currentPage * itemsPerPage, totalCustomers)}} จาก {{totalCustomers}} รายการ
+      </div>
       <nav>
         <ul class="pagination">
           <li class="page-item" [class.disabled]="currentPage === 1">
-            <a class="page-link" (click)="goToPage(currentPage - 1)" [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
+            <a class="page-link" (click)="goToPage(currentPage - 1)">
               <i class="bi-chevron-left"></i>
             </a>
           </li>
+<!--          <li class="page-item active">-->
+<!--            <span class="page-link">หน้า {{currentPage}} / {{totalPages}}</span>-->
+<!--          </li>-->
           <li class="page-item" [class.disabled]="currentPage === totalPages">
-            <a class="page-link" (click)="goToPage(currentPage + 1)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
-              <i class="bi-chevron-right"></i>
+            <a class="page-link" (click)="goToPage(currentPage + 1)">
+               <i class="bi-chevron-right"></i>
             </a>
           </li>
         </ul>

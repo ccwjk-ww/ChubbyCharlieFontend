@@ -494,3 +494,63 @@ select.form-control {
     margin-bottom: 1rem;
   }
 }
+/* ============================================
+   ⭐ Defective Quantity Bar — เพิ่มใน Quantity Details
+   เพิ่มโค้ดนี้ต่อท้าย china-stock.css และ thai-stock.css
+   ============================================ */
+
+/* แถบของเสียใน Quantity Details */
+.defective-qty-row {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px dashed rgba(255, 193, 7, 0.3);
+}
+
+.defective-qty-labels {
+  margin-bottom: 3px;
+}
+
+/* badge เล็กๆ แสดงข้อความของเสียพร้อม % */
+.defective-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e65100;
+  background: rgba(230, 81, 0, 0.1);
+  border: 1px solid rgba(230, 81, 0, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.defective-badge-inline i {
+  color: #f59e0b;
+  font-size: 0.65rem;
+}
+
+/* Progress bar สีส้มแดงสำหรับของเสีย */
+.quantity-progress-bar.bg-defective {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ============================================
+   VAT note ใน Modal
+   ============================================ */
+.vat-note {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.no-vat-note {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 4px;
+}

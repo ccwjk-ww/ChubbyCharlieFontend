@@ -24,10 +24,7 @@
             </div>
             <div class="form-group">
               <label for="stockLotId">Stock Lot</label>
-              <select
-                id="stockLotId"
-                formControlName="stockLotId"
-                class="form-control">
+              <select id="stockLotId" formControlName="stockLotId" class="form-control">
                 <option value="">Select a stock lot (optional)</option>
                 <option *ngFor="let lot of stockLots" [value]="lot.stockLotId">{{lot.lotName}}</option>
               </select>
@@ -81,41 +78,33 @@
                 min="0"
                 step="0.001">
             </div>
-
-            <!-- ⭐ แสดงค่าเฉลี่ย (read-only) -->
             <div class="form-group">
               <label>Average Shipping per Unit (฿) <small class="text-muted">(Auto-calculated)</small></label>
-              <input
-                class="form-control"
-                [value]="formatNumber(avgShippingPerUnit)"
-                readonly
-                disabled>
+              <input class="form-control" [value]="formatNumber(avgShippingPerUnit)" readonly disabled>
             </div>
           </div>
 
-          <!-- ⭐ Row 4: Buffer Section -->
-          <div class="field-row buffer-section">
+          <!-- ⭐ Row 4: VAT Section (แทน Buffer) -->
+          <div class="field-row vat-section">
             <div class="form-group checkbox-group">
               <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  formControlName="includeBuffer">
-                <span>คิดราคาเผื่อเสีย (Include Buffer)</span>
+                <input type="checkbox" formControlName="includeVat">
+                <span>คิดราคารวม VAT (Include VAT)</span>
               </label>
             </div>
 
-            <div class="form-group" *ngIf="thaiStockForm.value.includeBuffer">
-              <label for="bufferPercentage">Buffer Percentage (%)</label>
+            <div class="form-group" *ngIf="thaiStockForm.value.includeVat">
+              <label for="vatPercentage">VAT (%)</label>
               <input
-                id="bufferPercentage"
-                formControlName="bufferPercentage"
-                placeholder="Enter buffer percentage (e.g., 5 for 5%)"
+                id="vatPercentage"
+                formControlName="vatPercentage"
+                placeholder="Enter VAT percentage (e.g., 7 for 7%)"
                 class="form-control"
                 type="number"
                 min="0"
                 max="100"
                 step="0.1">
-              <small class="form-help">กำหนดเปอร์เซ็นต์เผื่อเสีย เช่น 5 หมายถึง +5%</small>
+              <small class="form-help">กำหนดอัตรา VAT เช่น 7 หมายถึง VAT 7%</small>
             </div>
           </div>
 
@@ -145,6 +134,12 @@
               </div>
             </div>
           </div>
+          <div *ngIf="isEditMode && stockItemId">
+            <app-stock-document-widget
+              [stockItemId]="stockItemId"
+              theme="theme-green">
+            </app-stock-document-widget>
+          </div>
         </div>
       </div>
 
@@ -161,7 +156,7 @@
       </div>
     </form>
 
-    <!-- ⭐ Thai Stock Preview Card (Updated) -->
+    <!-- Thai Stock Preview Card -->
     <div class="thai-stock-preview" *ngIf="thaiStockForm.value.name">
       <h3>Thai Stock Preview</h3>
       <div class="preview-card">
@@ -172,7 +167,6 @@
           </span>
         </div>
 
-        <!-- ⭐ Preview Details (Updated) -->
         <div class="preview-details">
           <div class="detail-item">
             <span class="label">Quantity:</span>
@@ -195,25 +189,24 @@
             <span class="value price">฿{{formatNumber(totalCost)}}</span>
           </div>
 
-          <!-- ⭐ แสดง Buffer ถ้ามี -->
-          <div class="detail-item" *ngIf="thaiStockForm.value.includeBuffer">
-            <span class="label">Buffer (+{{thaiStockForm.value.bufferPercentage || 0}}%):</span>
-            <span class="value buffer">฿{{formatNumber(totalWithBuffer - totalCost)}}</span>
+          <!-- ⭐ แสดง VAT ถ้ามี -->
+          <div class="detail-item" *ngIf="thaiStockForm.value.includeVat">
+            <span class="label">VAT ({{thaiStockForm.value.vatPercentage || 0}}%):</span>
+            <span class="value vat">฿{{formatNumber(vatAmount)}}</span>
           </div>
 
-          <!-- ⭐ Grand Total -->
+          <!-- Grand Total รวม VAT -->
           <div class="detail-item total">
-            <span class="label">Grand Total:</span>
-            <span class="value price-highlight">฿{{formatNumber(totalWithBuffer)}}</span>
+            <span class="label">Grand Total (รวม VAT):</span>
+            <span class="value price-highlight">฿{{formatNumber(totalWithVat)}}</span>
           </div>
 
-          <!-- ⭐ Final Price Per Unit -->
           <div class="detail-item">
             <span class="label">Price per Unit:</span>
             <span class="value">฿{{formatNumber(pricePerUnit)}}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Final Price/Unit:</span>
+            <span class="label">Final Price/Unit (รวม VAT):</span>
             <span class="value price-highlight">฿{{formatNumber(pricePerUnitWithShipping)}}</span>
           </div>
         </div>

@@ -1,12 +1,11 @@
-// stock-forecast-dashboard.component.ts
+// stock-forecast-dashboard.component.ts - ENHANCED VERSION
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import {
   StockForecastService,
   StockForecastSummaryDTO,
-  StockForecastDTO,
-  AIRecommendationDTO
+  StockForecastDTO
 } from '../../services/stock-forecast.service';
 
 @Component({
@@ -17,17 +16,23 @@ import {
   styleUrls: ['./stock-forecast-dashboard.css']
 })
 export class StockForecastDashboardComponent implements OnInit {
+  // Data
   summary: StockForecastSummaryDTO | null = null;
   urgentItems: StockForecastDTO[] = [];
   soonestToRunOut: StockForecastDTO[] = [];
-  aiRecommendations: AIRecommendationDTO | null = null;
+
+  // ⭐ NEW: การคาดการณ์เดือนถัดไป
+  nextMonthPredictions: any[] = [];
+  nextMonthSummary: any = null;
+
+  // Counts
   chinaStockCount: number = 0;
   thaiStockCount: number = 0;
   urgentOrderCost: number = 0;
+
+  // States
   loading: boolean = false;
   calculating: boolean = false;
-  calculatingAI: boolean = false;
-  loadingAI: boolean = false;
 
   constructor(
     private stockForecastService: StockForecastService,
@@ -36,9 +41,12 @@ export class StockForecastDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboard();
-    this.loadAIRecommendations();
+    this.loadNextMonthPredictions(); // ⭐ NEW
   }
 
+  /**
+   * โหลดข้อมูล dashboard
+   */
   loadDashboard(): void {
     this.loading = true;
     this.stockForecastService.getDashboard().subscribe({
@@ -53,64 +61,66 @@ export class StockForecastDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading dashboard:', error);
+        alert('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
         this.loading = false;
       }
     });
   }
 
-  loadAIRecommendations(): void {
-    this.loadingAI = true;
-    this.stockForecastService.getAIRecommendations().subscribe({
+  /**
+   * ⭐ NEW: โหลดการคาดการณ์เดือนถัดไป
+   */
+  loadNextMonthPredictions(): void {
+    this.stockForecastService.getNextMonthPredictions().subscribe({
       next: (data) => {
-        this.aiRecommendations = data;
-        this.loadingAI = false;
+        this.nextMonthPredictions = (data.predictions || []).slice(0, 10); // เอา 10 อันดับแรก
+        this.nextMonthSummary = {
+          totalPredicted: data.totalPredictedNextMonthUsage || 0,
+          averageConfidence: data.averageConfidence || 0,
+          nextMonth: this.nextMonthPredictions.length > 0 ? this.nextMonthPredictions[0].nextMonth : 'N/A'
+        };
       },
       error: (error) => {
-        console.error('Error loading AI recommendations:', error);
-        this.loadingAI = false;
+        console.error('Error loading predictions:', error);
       }
     });
   }
 
+  /**
+   * คำนวณ forecast ใหม่
+   */
   calculateForecasts(): void {
-    if (confirm('This will recalculate all stock forecasts using basic analysis. Continue?')) {
-      this.calculating = true;
-      this.stockForecastService.calculateAllForecasts().subscribe({
-        next: () => {
-          alert('Stock forecasts calculated successfully!');
-          this.calculating = false;
-          this.loadDashboard();
-        },
-        error: (error) => {
-          console.error('Error calculating forecasts:', error);
-          alert('Error calculating forecasts. Please try again.');
-          this.calculating = false;
-        }
-      });
+    if (!confirm('คำนวณ Stock Forecast ทั้งหมดใหม่หรือไม่?\n\n(ใช้เวลาประมาณ 1-2 นาที)')) {
+      return;
     }
+
+    this.calculating = true;
+    this.stockForecastService.calculateAllForecasts(180).subscribe({
+      next: (response) => {
+        alert(`✅ คำนวณสำเร็จ!\n\n📊 ประมวลผล: ${response.totalItems} รายการ`);
+        this.calculating = false;
+        this.loadDashboard();
+        this.loadNextMonthPredictions(); // ⭐ NEW: โหลดการคาดการณ์ใหม่
+      },
+      error: (error) => {
+        console.error('Error calculating forecasts:', error);
+        alert('❌ เกิดข้อผิดพลาดในการคำนวณ กรุณาลองใหม่อีกครั้ง');
+        this.calculating = false;
+      }
+    });
   }
 
   /**
-   * 🤖 NEW: Calculate forecasts with AI enhancement
+   * Refresh ข้อมูล
    */
-  calculateForecastsWithAI(): void {
-    if (confirm('This will recalculate all stock forecasts with AI-powered analysis. This may take a few minutes. Continue?')) {
-      this.calculatingAI = true;
-      this.stockForecastService.calculateAllForecastsWithAI(90).subscribe({
-        next: (response) => {
-          alert(`AI-Enhanced forecasts calculated successfully!\n\n✅ Success: ${response.successCount || 0}\n❌ Failed: ${response.failureCount || 0}`);
-          this.calculatingAI = false;
-          this.loadDashboard();
-          this.loadAIRecommendations();
-        },
-        error: (error) => {
-          console.error('Error calculating AI forecasts:', error);
-          alert('Error calculating AI-enhanced forecasts. Please try again.');
-          this.calculatingAI = false;
-        }
-      });
-    }
+  refresh(): void {
+    this.loadDashboard();
+    this.loadNextMonthPredictions();
   }
+
+  // ============================================
+  // Navigation Methods
+  // ============================================
 
   navigateToUrgentItems(): void {
     this.router.navigate(['/stock-forecast/urgent']);
@@ -124,59 +134,17 @@ export class StockForecastDashboardComponent implements OnInit {
     this.router.navigate(['/stock-forecast/analysis']);
   }
 
-  /**
-   * Navigate to AI Recommendations page
-   */
-  navigateToAIRecommendations(): void {
-    this.router.navigate(['/stock-forecast/ai-recommendations']);
-  }
+  // ============================================
+  // Helper Methods
+  // ============================================
 
   getUrgencyClass(urgencyLevel: string): string {
     switch (urgencyLevel) {
-      case 'CRITICAL':
-        return 'urgency-critical';
-      case 'HIGH':
-        return 'urgency-high';
-      case 'MEDIUM':
-        return 'urgency-medium';
-      case 'LOW':
-        return 'urgency-low';
-      default:
-        return 'urgency-unknown';
-    }
-  }
-
-  /**
-   * Get trend icon based on AI trend
-   */
-  getTrendIcon(trend: string | undefined): string {
-    if (!trend) return 'bi-dash-circle';
-    switch (trend.toUpperCase()) {
-      case 'INCREASING':
-        return 'bi-arrow-up-circle-fill';
-      case 'DECREASING':
-        return 'bi-arrow-down-circle-fill';
-      case 'STABLE':
-        return 'bi-dash-circle-fill';
-      default:
-        return 'bi-dash-circle';
-    }
-  }
-
-  /**
-   * Get trend class for styling
-   */
-  getTrendClass(trend: string | undefined): string {
-    if (!trend) return '';
-    switch (trend.toUpperCase()) {
-      case 'INCREASING':
-        return 'trend-increasing';
-      case 'DECREASING':
-        return 'trend-decreasing';
-      case 'STABLE':
-        return 'trend-stable';
-      default:
-        return '';
+      case 'CRITICAL': return 'urgency-critical';
+      case 'HIGH': return 'urgency-high';
+      case 'MEDIUM': return 'urgency-medium';
+      case 'LOW': return 'urgency-low';
+      default: return 'urgency-unknown';
     }
   }
 
@@ -184,39 +152,38 @@ export class StockForecastDashboardComponent implements OnInit {
     if (!amount) return '฿0.00';
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
-      currency: 'THB'
+      currency: 'THB',
+      minimumFractionDigits: 2
     }).format(amount);
+  }
+
+  formatNumber(num: number | undefined): string {
+    if (!num) return '0';
+    return new Intl.NumberFormat('en-US').format(num);
   }
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('th-TH');
+    return new Date(dateString).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
   formatDateTime(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('th-TH');
+    return new Date(dateString).toLocaleString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   getProgressPercentage(current: number, total: number): number {
     if (total === 0) return 0;
     return Math.round((current / total) * 100);
-  }
-
-  /**
-   * Check if item has AI enhancement
-   */
-  isAIPowered(item: StockForecastDTO): boolean {
-    return item.aiPowered === true;
-  }
-
-  /**
-   * Get AI confidence badge color
-   */
-  getConfidenceClass(confidence: number | undefined): string {
-    if (!confidence) return 'confidence-unknown';
-    if (confidence >= 80) return 'confidence-high';
-    if (confidence >= 60) return 'confidence-medium';
-    return 'confidence-low';
   }
 }

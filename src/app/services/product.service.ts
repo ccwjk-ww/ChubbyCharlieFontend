@@ -33,6 +33,42 @@ export interface ProductIngredient {
   stockItemName?: string;
   stockType?: string;
   availableQuantity?: number;
+  // ⭐ NEW: Multi-Lot fields
+  allocationMode?: 'SINGLE' | 'MULTI_LOT';
+  stockAllocations?: ProductIngredientAllocation[];
+}
+// ⭐ NEW: Interface สำหรับ Stock Allocation
+export interface ProductIngredientAllocation {
+  allocationId?: number;
+  stockItemId: number;
+  stockItemName?: string;
+  stockType?: 'CHINA' | 'THAI';
+  allocatedQuantity: number;
+  allocationPriority: number;
+  costPerUnit?: number;
+  totalCost?: number;
+  availableQuantity?: number;
+  lotName?: string;
+  stockLotId?: number;
+}
+
+export interface ProductIngredientRequest {
+  stockItemId?: number;
+  ingredientName: string;
+  requiredQuantity: number;
+  unit: string;
+  notes?: string;
+
+  // ⭐ NEW: Multi-Lot fields
+  allocationMode?: 'SINGLE' | 'MULTI_LOT';
+  stockAllocations?: StockAllocationRequest[];
+}
+
+// ⭐ NEW: Request สำหรับ allocation
+export interface StockAllocationRequest {
+  stockItemId: number;
+  allocatedQuantity: number;
+  allocationPriority: number;
 }
 
 export interface ProductCreateRequest {
@@ -97,6 +133,34 @@ export class ProductService {
     return this.http.get<Product[]>(this.apiUrl);
   }
 
+  /**
+   * ⭐ ดึงข้อมูล Stock Allocations ของ Ingredient
+   */
+  getIngredientAllocations(ingredientId: number): Observable<ProductIngredientAllocation[]> {
+    return this.http.get<ProductIngredientAllocation[]>(
+      `${this.apiUrl}/ingredients/${ingredientId}/allocations`
+    );
+  }
+  /**
+   * ⭐ อัปเดต Stock Allocations
+   */
+  updateIngredientAllocations(
+    ingredientId: number,
+    allocations: StockAllocationRequest[]
+  ): Observable<ProductIngredient> {
+    return this.http.put<ProductIngredient>(
+      `${this.apiUrl}/ingredients/${ingredientId}/allocations`,
+      allocations
+    );
+  }
+  /**
+   * ⭐ ค้นหา Stock Options ตามชื่อ
+   */
+  getStockOptionsByName(stockName: string): Observable<StockOption[]> {
+    return this.http.get<StockOption[]>(
+      `${this.apiUrl}/stock-options/by-name/${stockName}`
+    );
+  }
   getAvailableStockItems(): Observable<StockOption[]> {
     return this.http.get<StockOption[]>(`${this.apiUrl}/stock-options`);
   }
