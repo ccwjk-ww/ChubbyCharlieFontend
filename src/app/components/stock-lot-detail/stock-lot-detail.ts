@@ -77,29 +77,45 @@ export class StockLotDetailComponent implements OnInit {
     this.totalCostWithVat = beforeVatSum + vatSum;
   }
 
-  // ============================================
-  // ⭐ CORE: ยอดก่อน VAT ของ item
-  //    ใช้ field ที่ backend ส่งมา (totalValueBeforeVat หรือ totalValue)
-  // ============================================
+  // // ============================================
+  // // ⭐ CORE: ยอดก่อน VAT ของ item
+  // //    ใช้ field ที่ backend ส่งมา (totalValueBeforeVat หรือ totalValue)
+  // // ============================================
+  // private getItemAmountBeforeVat(item: any): number {
+  //   // ⭐ ใช้ field ใหม่ที่ backend ส่งมา (หลังแก้ StockMapper)
+  //   if (item.totalValueBeforeVat != null) return Number(item.totalValueBeforeVat);
+  //   if (item.totalBath != null) return Number(item.totalBath);
+  //   if (item.totalValue != null) return Number(item.totalValue);
+  //
+  //   // ThaiStock fallback
+  //   if (item.priceTotal != null) {
+  //     return Number(item.priceTotal) + Number(item.shippingCost || 0);
+  //   }
+  //
+  //   // quantity × unitPrice fallback
+  //   const qty = Number(item.quantity || item.currentQuantity || 0);
+  //   const unitPrice = this.getItemUnitPrice(item);
+  //   if (qty > 0 && unitPrice > 0) return qty * unitPrice;
+  //
+  //   return 0;
+  // }
+
+// ⭐ แก้ getItemAmountBeforeVat — ใช้ totalCostAtImport ที่ backend lock ไว้
   private getItemAmountBeforeVat(item: any): number {
-    // ⭐ ใช้ field ใหม่ที่ backend ส่งมา (หลังแก้ StockMapper)
-    if (item.totalValueBeforeVat != null) return Number(item.totalValueBeforeVat);
-    if (item.totalBath != null) return Number(item.totalBath);
-    if (item.totalValue != null) return Number(item.totalValue);
-
-    // ThaiStock fallback
-    if (item.priceTotal != null) {
-      return Number(item.priceTotal) + Number(item.shippingCost || 0);
+    // ⭐ ใช้ totalValueBeforeVat ที่ backend คำนวณถูกต้องแล้ว
+    if (item.totalValueBeforeVat != null && Number(item.totalValueBeforeVat) > 0) {
+      return Number(item.totalValueBeforeVat);
     }
-
-    // quantity × unitPrice fallback
-    const qty = Number(item.quantity || item.currentQuantity || 0);
-    const unitPrice = this.getItemUnitPrice(item);
-    if (qty > 0 && unitPrice > 0) return qty * unitPrice;
-
+    // ⭐ fallback: totalBath (สำหรับ ChinaStock)
+    if (item.totalBath != null && Number(item.totalBath) > 0) {
+      return Number(item.totalBath);
+    }
+    // ⭐ fallback: totalValue
+    if (item.totalValue != null && Number(item.totalValue) > 0) {
+      return Number(item.totalValue);
+    }
     return 0;
   }
-
   // ============================================
   // ⭐ CORE: VAT amount ของ item
   //    ใช้ vatAmount ที่ backend คำนวณมาให้แล้ว
@@ -163,15 +179,25 @@ export class StockLotDetailComponent implements OnInit {
     return this.totalVatAmount > 0;
   }
 
+  // getItemUnitPrice(item: any): number {
+  //   if (item.finalPricePerPair != null) return Number(item.finalPricePerPair);
+  //   if (item.finalPrice != null) return Number(item.finalPrice);
+  //   if (item.costPerUnit != null) return Number(item.costPerUnit);
+  //   if (item.pricePerUnit != null) return Number(item.pricePerUnit);
+  //   if (item.pricePerUnitWithShipping != null) return Number(item.pricePerUnitWithShipping);
+  //   return 0;
+  // }
+// ⭐ แก้ getItemUnitPrice — ใช้ finalPrice (= unitCostAtImport) จาก backend
   getItemUnitPrice(item: any): number {
-    if (item.finalPricePerPair != null) return Number(item.finalPricePerPair);
-    if (item.finalPrice != null) return Number(item.finalPrice);
-    if (item.costPerUnit != null) return Number(item.costPerUnit);
-    if (item.pricePerUnit != null) return Number(item.pricePerUnit);
-    if (item.pricePerUnitWithShipping != null) return Number(item.pricePerUnitWithShipping);
+    // ⭐ finalPrice และ finalPricePerPair ใน DTO = unitCostAtImport ที่ lock ไว้แล้ว
+    if (item.finalPrice != null && Number(item.finalPrice) > 0) {
+      return Number(item.finalPrice);
+    }
+    if (item.finalPricePerPair != null && Number(item.finalPricePerPair) > 0) {
+      return Number(item.finalPricePerPair);
+    }
     return 0;
   }
-
   getItemUnitPriceWithVat(item: any): number {
     if (item.finalPriceWithVat != null) return Number(item.finalPriceWithVat);
     const total = this.getItemTotalCost(item);

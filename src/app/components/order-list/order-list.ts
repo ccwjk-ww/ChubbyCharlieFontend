@@ -31,6 +31,9 @@ export class OrderListComponent implements OnInit {
 
   // ⭐ เพิ่ม computed totals
   totalRevenue: number = 0;
+  totalCost: number = 0;
+  totalProfit: number = 0;
+
 
   statusOptions = [
     { value: 'ALL', label: 'ทุกสถานะ' },
@@ -88,11 +91,20 @@ export class OrderListComponent implements OnInit {
     });
   }
 
-  // ⭐ เพิ่ม method คำนวณยอดรวม
+  // แก้ calculateTotals()
   calculateTotals(): void {
-    this.totalRevenue = this.filteredOrders
-      .filter(o => o.status !== 'CANCELLED' && o.status !== 'RETURNED')
+    const activeOrders = this.filteredOrders.filter(
+      o => o.status !== 'CANCELLED' && o.status !== 'RETURNED'
+    );
+
+    this.totalRevenue = activeOrders
       .reduce((sum, order) => sum + (order.netAmount || 0), 0);
+
+    this.totalCost = activeOrders
+      .reduce((sum, order) => sum + (order.totalCost || 0), 0);
+
+    this.totalProfit = activeOrders
+      .reduce((sum, order) => sum + (order.profit || 0), 0);
   }
 
   onSearch(): void {

@@ -70,12 +70,12 @@ export class ChinaStockAddComponent implements OnInit {
           this.chinaStockForm.patchValue({
             name: stock.name,
             shopURL: stock.shopURL || '',
+            // ⭐ แก้: ใช้ originalQuantity แทน quantity
+            quantity: stock.originalQuantity || stock.currentQuantity || stock.quantity,
             unitPriceYuan: stock.unitPriceYuan,
-            quantity: stock.quantity,
             shippingWithinChinaYuan: stock.shippingWithinChinaYuan || 0,
             exchangeRate: stock.exchangeRate,
             shippingChinaToThaiBath: stock.shippingChinaToThaiBath || 0,
-            // ⭐ VAT fields
             includeVat: stock.includeVat || false,
             vatPercentage: stock.vatPercentage || 0,
             status: stock.status || 'ACTIVE',

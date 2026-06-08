@@ -17,7 +17,6 @@ export interface Order {
   shippingFee?: number;
   discount?: number;
   netAmount?: number;
-  // ⭐ VAT fields
   vatEnabled?: boolean;
   vatRate?: number;
   vatAmount?: number;
@@ -29,6 +28,8 @@ export interface Order {
   createdDate?: Date;
   updatedDate?: Date;
   orderItems?: OrderItem[];
+  totalCost?: number;
+  profit?: number;
 }
 
 export interface OrderItem {
@@ -59,7 +60,6 @@ export interface OrderUploadResponse {
   stockDeductionMessages?: string[];
 }
 
-// ⭐ Interfaces สำหรับ Stock Check Details
 export interface StockCheckDetailsResponse {
   success: boolean;
   allAvailable: boolean;
@@ -78,7 +78,6 @@ export interface StockCheckDetail {
   ingredients: IngredientDetail[];
 }
 
-// ⭐ Multi-Lot Support
 export interface IngredientDetail {
   ingredientName: string;
   unit: string;
@@ -90,17 +89,12 @@ export interface IngredientDetail {
   available: boolean;
   shortage?: number;
   errorMessage?: string;
-
-  // Stock Lot Information
   stockLotId?: number;
   stockLotName?: string;
   stockLotStatus?: string;
-
-  // ⭐ Multi-Lot Allocations
   stockAllocations?: StockAllocationDetail[];
 }
 
-// ⭐ Stock Allocation Detail
 export interface StockAllocationDetail {
   stockName: string;
   stockType: string;
@@ -208,6 +202,9 @@ export class OrderService {
     return this.http.post<any>(`${this.apiUrl}/upload/preview-24shop-pdf`, formData);
   }
 
+  /**
+   * ⭐ Upload TikTok Excel — ใช้ Apache POI โดยตรง (ไม่ใช้ Gemini)
+   */
   uploadTiktokExcel(file: File, customerId: number, autoDeductStock: boolean = false): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
@@ -216,9 +213,15 @@ export class OrderService {
     return this.http.post<any>(`${this.apiUrl}/upload/tiktok-excel`, formData);
   }
 
-  previewTiktokExcel(file: File): Observable<any> {
+  /**
+   * ⭐ Preview TikTok Excel — ส่ง customerId ด้วยเพื่อให้แสดงชื่อลูกค้า
+   */
+  previewTiktokExcel(file: File, customerId?: number): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
+    if (customerId) {
+      formData.append('customerId', customerId.toString());
+    }
     return this.http.post<any>(`${this.apiUrl}/upload/preview-tiktok-excel`, formData);
   }
 
@@ -241,5 +244,14 @@ export class OrderService {
 
   getStockDeductionStatus(id: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/${id}/stock-deduction-status`);
+  }
+
+  /**
+   * ⭐ Scan TikTok Excel แบบ VAT — ดูรายงานเท่านั้น ไม่ save
+   */
+  scanTiktokExcel(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(`${this.apiUrl}/upload/scan-tiktok-excel`, formData);
   }
 }

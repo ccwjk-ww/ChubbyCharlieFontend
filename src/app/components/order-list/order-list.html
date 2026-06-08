@@ -34,6 +34,17 @@
             <div class="stats-number">{{formatCurrency(totalRevenue)}}</div>
             <div class="stats-label">ยอดรวมทั้งหมด</div>
           </div>
+
+          <!-- ⭐ เพิ่มใหม่ -->
+          <div class="stats-card cost">
+            <div class="stats-number">{{formatCurrency(totalCost)}}</div>
+            <div class="stats-label">ต้นทุนรวม</div>
+          </div>
+
+          <div class="stats-card profit" [class.negative]="totalProfit < 0">
+            <div class="stats-number">{{formatCurrency(totalProfit)}}</div>
+            <div class="stats-label">กำไรรวม</div>
+          </div>
         </div>
       </div>
 
@@ -103,6 +114,8 @@
           <th class="col-customer">ลูกค้า</th>
           <th class="col-date">วันที่สั่ง</th>
           <th class="col-amount">ยอดรวม</th>
+          <th class="col-cost">ต้นทุน</th>      <!-- ⭐ เพิ่ม -->
+          <th class="col-profit">กำไร</th>       <!-- ⭐ เพิ่ม -->
           <th class="col-status">สถานะออเดอร์</th>
           <th class="col-payment">สถานะชำระเงิน</th>
           <th class="col-action">การดำเนินการ</th>
@@ -142,6 +155,23 @@
           <td class="col-amount">
             <strong>{{formatCurrency(order.netAmount)}}</strong>
           </td>
+          <!-- ⭐ เพิ่มใหม่ -->
+          <td class="col-cost">
+            <span class="text-muted" *ngIf="!order.totalCost || order.totalCost === 0">-</span>
+            <span *ngIf="order.totalCost && order.totalCost > 0">
+              {{formatCurrency(order.totalCost)}}
+            </span>
+          </td>
+
+          <td class="col-profit">
+            <span class="text-muted" *ngIf="!order.profit && order.profit !== 0">-</span>
+            <span *ngIf="order.profit !== undefined && order.profit !== null"
+                  [class.text-success]="order.profit > 0"
+                  [class.text-danger]="order.profit < 0">
+              {{formatCurrency(order.profit)}}
+            </span>
+          </td>
+
           <td class="col-status">
             <span [class]="getStatusClass(order.status)">
               {{order.status === 'PENDING' ? 'รอดำเนินการ' :
@@ -204,7 +234,7 @@
           </td>
         </tr>
         <tr *ngIf="filteredOrders.length === 0 && !loading">
-          <td colspan="9" class="empty-state">
+          <td colspan="11" class="empty-state">
             <i class="bi-cart-x"></i>
             <p>ไม่พบออเดอร์</p>
             <small>ลองค้นหาด้วยคำอื่น หรือเพิ่มออเดอร์ใหม่</small>

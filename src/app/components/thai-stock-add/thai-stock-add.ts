@@ -67,12 +67,12 @@ export class ThaiStockAddComponent implements OnInit {
           this.thaiStockForm.patchValue({
             name: stock.name,
             shopURL: stock.shopURL || '',
-            quantity: stock.quantity,
+            // ⭐ แก้: ใช้ originalQuantity แทน quantity
+            quantity: stock.originalQuantity || stock.currentQuantity || stock.quantity,
             priceTotal: stock.priceTotal,
             shippingCost: stock.shippingCost || 0,
             status: stock.status || 'ACTIVE',
             stockLotId: stock.stockLotId || '',
-            // ⭐ VAT fields
             includeVat: stock.includeVat || false,
             vatPercentage: stock.vatPercentage || 0,
           });

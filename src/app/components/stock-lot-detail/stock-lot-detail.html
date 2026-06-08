@@ -55,7 +55,9 @@
               </span>
             </div>
             <div class="item-info">
-              <span *ngIf="item.quantity">จำนวน: {{item.quantity}}</span>
+              <span *ngIf="item.originalQuantity || item.quantity">
+                จำนวน: {{item.originalQuantity || item.quantity}}
+              </span>
               <span *ngIf="getItemUnitPrice(item) > 0">
                 ราคา/หน่วย: {{formatCurrency(getItemUnitPrice(item))}}
               </span>

@@ -429,4 +429,111 @@ export class ProductAddComponent implements OnInit {
       }
     }
   }
+  // ⭐ คำนวณต้นทุนรวมทุก ingredient (รองรับทั้ง SINGLE และ MULTI_LOT)
+  calculateTotalCost(): number {
+    let total = 0;
+    this.ingredientsArray.controls.forEach(control => {
+      const mode = control.get('allocationMode')?.value || 'SINGLE';
+
+      if (mode === 'SINGLE') {
+        const stockItemId = control.get('stockItemId')?.value;
+        const qty = parseFloat(control.get('requiredQuantity')?.value || '0');
+        if (stockItemId && qty > 0) {
+          const opt = this.stockOptions.find(o => o.stockItemId.toString() === stockItemId.toString());
+          if (opt) total += opt.unitCost * qty;
+        }
+      } else {
+        // MULTI_LOT — ใช้ totalCost ที่คำนวณไว้ใน allocation forms
+        const allocs = control.get('stockAllocations') as any;
+        if (allocs?.controls) {
+          allocs.controls.forEach((alloc: any) => {
+            total += parseFloat(alloc.get('totalCost')?.value || '0');
+          });
+        }
+      }
+    });
+    return total;
+  }
+
+// ⭐ กำไร = ราคาขาย - ต้นทุน
+  calculateProfit(): number {
+    const price = parseFloat(this.productForm.get('sellingPrice')?.value || '0');
+    return price - this.calculateTotalCost();
+  }
+
+// ⭐ % กำไร = กำไร / ราคาขาย × 100
+  calculateProfitPercent(): number {
+    const price = parseFloat(this.productForm.get('sellingPrice')?.value || '0');
+    if (price <= 0) return 0;
+    return (this.calculateProfit() / price) * 100;
+  }
+
+// ⭐ ข้อมูลส่วนประกอบแต่ละตัว สำหรับแสดงใน preview
+  getIngredientCostDetails(control: any): {
+    name: string; qty: number; unit: string;
+    mode: string; costPerUnit: number; totalCost: number;
+    stockName: string; lotName: string;
+    allocations: any[];
+  } {
+    const mode = control.get('allocationMode')?.value || 'SINGLE';
+    const name = control.get('ingredientName')?.value || 'ไม่ระบุ';
+    const qty = parseFloat(control.get('requiredQuantity')?.value || '0');
+    const unit = control.get('unit')?.value || '';
+
+    if (mode === 'SINGLE') {
+      const stockItemId = control.get('stockItemId')?.value;
+      const opt = stockItemId
+        ? this.stockOptions.find(o => o.stockItemId.toString() === stockItemId.toString())
+        : null;
+      const costPerUnit = opt?.unitCost || 0;
+      return {
+        name, qty, unit, mode,
+        costPerUnit,
+        totalCost: costPerUnit * qty,
+        stockName: opt ? `${opt.name} (${opt.type})` : '-',
+        lotName: opt?.lotName || '-',
+        allocations: []
+      };
+    } else {
+      // MULTI_LOT
+      const allocs = control.get('stockAllocations') as any;
+      const allocDetails: any[] = [];
+      let totalCost = 0;
+
+      if (allocs?.controls) {
+        allocs.controls.forEach((alloc: any) => {
+          const stockItemId = alloc.get('stockItemId')?.value;
+          const opt = stockItemId
+            ? this.stockOptions.find(o => o.stockItemId.toString() === stockItemId.toString())
+            : null;
+          const allocQty = parseFloat(alloc.get('allocatedQuantity')?.value || '0');
+          const unitCost = parseFloat(alloc.get('unitCost')?.value || opt?.unitCost || '0');
+          const allocTotal = parseFloat(alloc.get('totalCost')?.value || (unitCost * allocQty).toString());
+          totalCost += allocTotal;
+
+          allocDetails.push({
+            stockName: opt ? `${opt.name} (${opt.type})` : '-',
+            lotName: opt?.lotName || alloc.get('lotName')?.value || '-',
+            qty: allocQty,
+            unitCost,
+            totalCost: allocTotal,
+            priority: alloc.get('allocationPriority')?.value
+          });
+        });
+      }
+
+      return {
+        name, qty, unit, mode,
+        costPerUnit: qty > 0 ? totalCost / qty : 0,
+        totalCost,
+        stockName: 'หลาย Lots',
+        lotName: '-',
+        allocations: allocDetails
+      };
+    }
+  }
+
+  formatCurrency(n: number): string {
+    return `฿${(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
 }

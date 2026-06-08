@@ -545,3 +545,137 @@
   align-items: center;
   gap: 0.3rem;
 }
+/* ⭐ Stats Card เพิ่มเติม */
+.stats-card.cost {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+  box-shadow: 0 4px 12px rgba(246, 173, 85, 0.3);
+}
+
+.stats-card.profit {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+}
+
+.stats-card.profit.negative {
+  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+/* ⭐ ลดขนาด stats-number ให้พอดีเมื่อมี 4 cards */
+.stats-cards .stats-card .stats-number {
+  font-size: 1.2rem;
+}
+
+.stats-cards .stats-card {
+  min-width: 130px;
+  padding: 0.75rem 1rem;
+}
+
+/* ⭐ Column ต้นทุนและกำไร */
+.col-cost,
+.col-profit {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.col-cost span,
+.col-profit span {
+  font-size: 0.9rem;
+}
+
+.text-success {
+  color: #38a169;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #e53e3e;
+  font-weight: 600;
+}
+
+.text-muted {
+  color: #a0aec0;
+  font-size: 0.85rem;
+}
+
+/* ⭐ ยอดรวม column จัดขวา */
+.col-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ⭐ Responsive: ซ่อน cost/profit บนมือถือ */
+@media (max-width: 1024px) {
+  .col-cost,
+  .col-profit {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-cards {
+    gap: 0.5rem;
+  }
+
+  .stats-cards .stats-card {
+    min-width: 0;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .stats-cards .stats-card .stats-number {
+    font-size: 1rem;
+  }
+
+  .stats-cards .stats-card .stats-label {
+    font-size: 0.75rem;
+  }
+}/* ⭐ ยอดรวม — เขียว */
+.col-amount strong {
+  color: #38a169;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* ⭐ ต้นทุน — ส้ม */
+.col-cost span:not(.text-muted) {
+  color: #ed8936;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* ⭐ กำไร — น้ำเงิน (บวก) / แดง (ลบ) */
+.text-success {
+  color: #3182ce !important;
+  font-weight: 700;
+}
+
+.text-danger {
+  color: #e53e3e !important;
+  font-weight: 700;
+}
+
+/* ⭐ Stats cards — ใช้สีเดียวกับตาราง */
+.stats-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.stats-card.revenue {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.stats-card.cost {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+  box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+}
+
+.stats-card.profit {
+  background: linear-gradient(135deg, #63b3ed 0%, #3182ce 100%);
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+.stats-card.profit.negative {
+  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}

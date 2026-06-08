@@ -175,18 +175,21 @@
   <div class="product-preview" *ngIf="productForm.value.productName || productForm.value.sku">
     <h3>ตัวอย่างสินค้า</h3>
     <div class="preview-card">
+
+      <!-- Header -->
       <div class="preview-header">
         <h4>{{productForm.value.productName || 'ชื่อสินค้า'}}</h4>
         <span class="preview-status"
               [class.active]="productForm.value.status === 'ACTIVE'"
               [class.inactive]="productForm.value.status === 'INACTIVE'"
               [class.discontinued]="productForm.value.status === 'DISCONTINUED'">
-            {{productForm.value.status === 'ACTIVE' ? 'ใช้งาน' :
+        {{productForm.value.status === 'ACTIVE' ? 'ใช้งาน' :
           productForm.value.status === 'INACTIVE' ? 'ไม่ใช้งาน' :
             productForm.value.status === 'DISCONTINUED' ? 'หยุดผลิต' : 'ใช้งาน'}}
-          </span>
+      </span>
       </div>
 
+      <!-- ข้อมูลพื้นฐาน -->
       <div class="preview-details">
         <div class="detail-item">
           <span class="label">รหัสสินค้า:</span>
@@ -196,37 +199,121 @@
           <span class="label">หมวดหมู่:</span>
           <span class="value">{{productForm.value.category || '-'}}</span>
         </div>
-        <div class="detail-item">
-          <span class="label">ราคาขาย:</span>
-          <span class="value price">฿{{productForm.value.sellingPrice || 0}}</span>
+      </div>
+
+      <!-- ⭐ สรุปราคา/ต้นทุน/กำไร -->
+      <div class="preview-cost-summary">
+        <div class="cost-row">
+          <span class="cost-label">ราคาขาย</span>
+          <span class="cost-value price">
+          {{formatCurrency(productForm.value.sellingPrice || 0)}}
+        </span>
         </div>
-        <div class="detail-item" *ngIf="!isEditMode">
-          <span class="label">ต้นทุนประมาณ:</span>
-          <span class="value cost">฿{{calculateEstimatedCost().toFixed(2)}}</span>
+        <div class="cost-row">
+          <span class="cost-label">ต้นทุนรวม</span>
+          <span class="cost-value cost">{{formatCurrency(calculateTotalCost())}}</span>
         </div>
-        <div class="detail-item" *ngIf="!isEditMode">
-          <span class="label">กำไรประมาณ:</span>
-          <span class="value profit" [class.negative]="calculateEstimatedProfit() < 0">
-              ฿{{calculateEstimatedProfit().toFixed(2)}}
-            </span>
+        <div class="cost-divider"></div>
+        <div class="cost-row total">
+          <span class="cost-label">กำไร</span>
+          <span class="cost-value profit" [class.negative]="calculateProfit() < 0">
+          {{formatCurrency(calculateProfit())}}
+        </span>
         </div>
-        <div class="detail-item" *ngIf="!isEditMode">
-          <span class="label">เปอร์เซ็นต์กำไร:</span>
-          <span class="value margin" [class.negative]="calculateProfitMargin() < 0">
-              {{calculateProfitMargin().toFixed(1)}}%
-            </span>
+        <div class="cost-row">
+          <span class="cost-label">% กำไร</span>
+          <span class="cost-value margin" [class.negative]="calculateProfitPercent() < 0">
+          {{calculateProfitPercent().toFixed(1)}}%
+        </span>
         </div>
       </div>
 
+      <!-- ⭐ รายละเอียดส่วนประกอบ -->
       <div class="ingredients-preview" *ngIf="ingredientsArray.length > 0">
-        <h5>ส่วนประกอบ:</h5>
-        <ul class="ingredients-list">
-          <li *ngFor="let ingredient of ingredientsArray.controls" class="ingredient-preview-item">
-            <span class="ingredient-name">{{ingredient.get('ingredientName')?.value || 'ไม่ระบุชื่อ'}}</span>
-            <span class="ingredient-quantity">{{ingredient.get('requiredQuantity')?.value || 0}} {{ingredient.get('unit')?.value || 'หน่วย'}}</span>
-          </li>
-        </ul>
+        <h5>ส่วนประกอบ</h5>
+
+        <div class="ingredient-detail-card"
+             *ngFor="let ing of ingredientsArray.controls; let i = index">
+
+          <ng-container *ngIf="getIngredientCostDetails(ing) as detail">
+
+            <!-- ชื่อ + จำนวน -->
+            <div class="ing-header">
+              <span class="ing-name">{{detail.name || 'ไม่ระบุชื่อ'}}</span>
+              <span class="ing-qty">{{detail.qty}} {{detail.unit}}</span>
+              <span class="ing-mode-badge" [class.multi]="detail.mode === 'MULTI_LOT'">
+              {{detail.mode === 'MULTI_LOT' ? 'Multi-Lot' : 'Single'}}
+            </span>
+            </div>
+
+            <!-- SINGLE MODE -->
+            <div class="ing-body" *ngIf="detail.mode === 'SINGLE'">
+              <div class="ing-info-row">
+                <span class="ing-info-label">Stock:</span>
+                <span class="ing-info-value">{{detail.stockName}}</span>
+              </div>
+              <div class="ing-info-row">
+                <span class="ing-info-label">Lot:</span>
+                <span class="ing-info-value lot-name">{{detail.lotName}}</span>
+              </div>
+              <div class="ing-cost-row">
+                <div class="ing-cost-item">
+                  <span class="ing-cost-label">ต้นทุน/หน่วย</span>
+                  <span class="ing-cost-value">{{formatCurrency(detail.costPerUnit)}}</span>
+                </div>
+                <span class="ing-cost-sep">×</span>
+                <div class="ing-cost-item">
+                  <span class="ing-cost-label">จำนวน</span>
+                  <span class="ing-cost-value">{{detail.qty}} {{detail.unit}}</span>
+                </div>
+                <span class="ing-cost-sep">=</span>
+                <div class="ing-cost-item total">
+                  <span class="ing-cost-label">รวม</span>
+                  <span class="ing-cost-value total-cost">
+                  {{formatCurrency(detail.totalCost)}}
+                </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- MULTI-LOT MODE -->
+            <div class="ing-body" *ngIf="detail.mode === 'MULTI_LOT'">
+              <div class="multi-lot-list">
+                <div class="multi-lot-row"
+                     *ngFor="let alloc of detail.allocations; let ai = index">
+                  <span class="alloc-priority">#{{alloc.priority}}</span>
+                  <div class="alloc-info">
+                    <span class="alloc-stock">{{alloc.stockName}}</span>
+                    <span class="alloc-lot">Lot: {{alloc.lotName}}</span>
+                  </div>
+                  <div class="alloc-calc">
+                    <span>{{formatCurrency(alloc.unitCost)}}</span>
+                    <span class="calc-sep">×</span>
+                    <span>{{alloc.qty}}</span>
+                    <span class="calc-sep">=</span>
+                    <span class="alloc-total">{{formatCurrency(alloc.totalCost)}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="ing-cost-row summary">
+                <div class="ing-cost-item">
+                  <span class="ing-cost-label">ต้นทุน/หน่วย (เฉลี่ย)</span>
+                  <span class="ing-cost-value">{{formatCurrency(detail.costPerUnit)}}</span>
+                </div>
+                <span class="ing-cost-sep">=</span>
+                <div class="ing-cost-item total">
+                  <span class="ing-cost-label">รวมทั้งหมด</span>
+                  <span class="ing-cost-value total-cost">
+                  {{formatCurrency(detail.totalCost)}}
+                </span>
+                </div>
+              </div>
+            </div>
+
+          </ng-container>
+        </div>
       </div>
+
     </div>
   </div>
 </div>
